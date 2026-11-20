@@ -62,6 +62,7 @@ func (wg *WorldGuard) Enable(s plugin.Server) error {
 	wg.regions = newRegionContainer(wg, storage.Driver{Root: filepath.Join(s.DataDir(), "worlds"), Log: wg.Log})
 	wg.regions.initialize()
 	wg.sessions.register()
+	wg.registerCommands()
 	worldguard.Flags.SetInitialized(true)
 	plugin.Provide[worldguard.API](s, &api{wg}, 0)
 	current.Lock()
@@ -72,6 +73,9 @@ func (wg *WorldGuard) Enable(s plugin.Server) error {
 
 // Disable saves the regions. WorldGuard: WorldGuard.disable
 func (wg *WorldGuard) Disable() {
+	if wg.sessions != nil {
+		wg.sessions.shutdown()
+	}
 	if wg.regions != nil {
 		wg.regions.shutdown()
 	}

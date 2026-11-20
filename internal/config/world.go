@@ -56,8 +56,10 @@ type World struct {
 	BlockLighter               bool
 	PreventLavaFire            bool
 	DisableFireSpread          bool
-	DisableFireSpreadBlocks    map[registry.Block]bool
-	AllowedLavaSpreadOver      map[registry.Block]bool
+	// FireSpreadDisableToggle is /stopfire's switch, not saved.
+	FireSpreadDisableToggle bool
+	DisableFireSpreadBlocks map[registry.Block]bool
+	AllowedLavaSpreadOver   map[registry.Block]bool
 
 	BlockCreeperExplosions        bool
 	BlockCreeperBlockDamage       bool

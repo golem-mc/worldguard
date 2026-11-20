@@ -13,6 +13,11 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
 | `internal/config/` | `config.yml` and `worlds/<world>/config.yml`, and the default files | `ConfigurationManager`, `YamlWorldConfiguration`, `BukkitWorldConfiguration`, `resources/defaults` |
 | `internal/storage/` | `worlds/<world>/regions.yml` | `DirectoryYamlDriver`, `YamlRegionFile` |
 | `internal/yamlfile/` | YAML files with dotted paths and defaults written back | WorldEdit's `YAMLProcessor` |
+| `worldguardplugin/sessions.go`, `handlers.go` | Sessions and their flag handlers | `session/Session`, `session/handler/*` |
+| `worldguardplugin/movement.go`, `invincibility.go` | Movement, teleport, respawn and join listeners; invincibility and player modes | `PlayerMoveListener`, `WorldGuardPlayerListener` (teleport, respawn, join), `InvincibilityListener`, `PlayerModesListener` |
+| `worldguardplugin/cmdline.go`, `matcher.go` | The sk89q command style (flags, usage errors) and player and world matching | `CommandsManager`, `BukkitStringMatcher` |
+| `worldguardplugin/general.go`, `toggles.go`, `wgcommands.go` | `/god` and the other general commands, the toggles, `/wg` | `GeneralCommands`, `ToggleCommands`, `WorldGuardCommands` |
+| `internal/chat/` | Legacy `§` text and WorldEdit's message colours | `CommandUtils`, `Actor.print*` |
 | `cmd/server/` | A server with WorldGuard and WorldEdit built in | — |
 
 ## Decisions
@@ -50,6 +55,22 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
   unregistered node is an operator's, as on Bukkit.
 - **Files**: `config.yml`'s header is written with `\n` line ends; `custom-metrics-charts`
   is not read (there are no metrics).
+- **Sessions** keep upstream's handler order and its `FlagValueChangeHandler` semantics
+  (a handler sees a value change only when the regions or the world change). Movement
+  types that upstream only distinguishes for custom handlers (glide, swim, ride) are all
+  `move`. `GameModeFlag`'s game mode change block is not ported: upstream never sets the
+  value it compares against, so it never fires.
+- **The game-mode flag's default** is read from `server.properties` (golem-mc/golem#158).
+- **Titles** always use the default fade times (golem-mc/golem#159).
+- **Commands** are registered one per name; a name another plugin holds is skipped with a
+  warning (golem-mc/golem#160). They do not set golem's command permission, so a player
+  without it gets WorldGuard's own "You don't have permission." instead of an unknown
+  command, and `op-permissions` applies.
+- **`/wg profile`** uses Go's CPU profiler (`runtime/pprof`) for the whole process; Java's
+  per-thread sampling and its `-t` filter have no Go counterpart. `-i` is checked but the
+  profiler's rate is Go's.
+- **`/wg running`** always answers that nothing runs: the port has no task supervisor,
+  loading and saving regions happen synchronously or on golem's scheduler.
 - **Saving**: changes are saved every 30 seconds in the background and on shutdown, as
   upstream does.
 
