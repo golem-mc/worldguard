@@ -135,7 +135,6 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
   table (WorldEdit does not export its legacy item table, so numeric ids of items that
   are not blocks are refused). The database logger (`DatabaseHandler`) is not ported; a
   warning says so when it is on. The file logger keeps upstream's month from `00`.
-  Dispensers equipping armour are not checked against `on-equip` (golem-mc/golem#170).
 - **Armour** for the blacklist is any item equippable on the head, chest, legs or feet,
   which covers upstream's armour tags, skulls, carved pumpkins and elytra.
 - **`/wg debug`** (`debug.go`, upstream's `BukkitDebugHandler` and `CancelReport`) fires

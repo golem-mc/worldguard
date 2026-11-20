@@ -1,6 +1,7 @@
 package worldguardplugin
 
 import (
+	"math"
 	"os"
 	"testing"
 
@@ -38,5 +39,43 @@ func TestBlacklistDeniesAndTells(t *testing.T) {
 	bob.Read(2)
 	if blockAt(wg, 4, 64, 4) != registry.BlockGravel {
 		t.Fatal("Bob could not place gravel, which is not blacklisted")
+	}
+}
+
+// A dispenser firing armour at a player is checked against on-equip.
+// WorldGuard: BlacklistListener.onBlockDispenseArmor
+func TestBlacklistStopsDispenserEquippingPlayer(t *testing.T) {
+	srv, wg := start(t)
+	bob := srv.Join("Bob")
+	cfg := wg.WorldConfig(wg.Server.Overworld())
+	if err := os.WriteFile(cfg.BlacklistFile, []byte("[iron_helmet]\non-equip=deny\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	wg.loadBlacklist(cfg)
+
+	loc := bob.Handle().Location()
+	x, y, z := int(math.Floor(loc.Pos.X)), int(math.Floor(loc.Pos.Y)), int(math.Floor(loc.Pos.Z))
+	w := wg.Server.Overworld()
+	state, ok := registry.WithProp(registry.BlockDispenser.DefaultState(), registry.PropFacing, "south")
+	if !ok {
+		t.Fatal("dispenser has no facing")
+	}
+	dpos := plugin.BlockPos{X: x, Y: y, Z: z - 1}
+	w.SetBlockState(dpos, plugin.BlockState(state), plugin.UpdateAll)
+	srv.RunTicks(1)
+	c, ok := w.BlockEntity(dpos)
+	if !ok {
+		t.Fatal("no dispenser block entity")
+	}
+	inv := c.(plugin.Container).Inventory()
+	inv.SetItem(0, plugin.NewStack(registry.ItemIronHelmet, 1))
+	w.SetBlockState(plugin.BlockPos{X: x, Y: y + 1, Z: z - 1}, plugin.BlockState(registry.BlockRedstoneBlock.DefaultState()), plugin.UpdateAll)
+	srv.RunTicks(6)
+
+	if inv.Item(0).Count != 1 {
+		t.Error("the dispenser lost the denied helmet")
+	}
+	if !bob.Handle().Equipment().Get(plugin.SlotHead).Empty() {
+		t.Error("the dispenser dressed Bob in a blacklisted helmet")
 	}
 }
