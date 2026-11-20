@@ -184,7 +184,7 @@ removing it). Besides the command nodes above:
 | `worldguard.build.entity.<entity>.place`, `.remove`, `.interact`, `.damage` | the same for entities, with `build-permission-nodes.enable` |
 | `worldguard.build.item.<item>.use` | using that item, with `build-permission-nodes.enable` |
 | `worldguard.override.lighter` | lighting fires where `ignition.block-lighter` is on |
-| `worldguard.override.potions` | drinking and throwing the potions `gameplay.block-potions` names |
+| `worldguard.override.potions` | drinking and throwing the potions, and shooting the tipped arrows, `gameplay.block-potions` names |
 | `worldguard.override.infinite-stack` | keeping stacks of negative size where `protection.remove-infinite-stacks` is on |
 | `worldguard.region.unlimited` | claim regions of any size and number |
 | `worldguard.region.addowner.unclaimed.<id>` | add the first owner to a region nobody owns |

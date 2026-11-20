@@ -313,3 +313,60 @@ func TestEntityOriginJudgesTNTWhereItWasSpawned(t *testing.T) {
 		t.Errorf("with the option the TNT stands at x=%v, want its origin 5.5", x)
 	}
 }
+
+func TestPoweredSpongeStopsAbsorbing(t *testing.T) {
+	srv, wg := start(t)
+	srv.Join("Alice")
+	w := wg.Server.Overworld()
+	cfg := wg.WorldConfig(w)
+	cfg.SimulateSponge, cfg.SpongeRadius, cfg.RedstoneSponges = true, 2, true
+	sponge, power, water, to := regionBlock(wg, 5, 70, 5), regionBlock(wg, 6, 70, 5), regionBlock(wg, 5, 70, 7), regionBlock(wg, 5, 70, 6)
+	sponge.Set(plugin.BlockState(registry.BlockSponge.DefaultState()))
+	water.Set(plugin.BlockState(registry.BlockWater.DefaultState()))
+	flows := func() bool {
+		e := &plugin.BlockFromToEvent{From: water, To: to}
+		wg.Server.Events().Fire(e)
+		return !e.Cancelled()
+	}
+	if flows() {
+		t.Error("water flows next to an unpowered sponge")
+	}
+	power.Set(plugin.BlockState(registry.BlockRedstoneBlock.DefaultState()))
+	if !flows() {
+		t.Error("water is absorbed by a powered sponge")
+	}
+	cfg.RedstoneSponges = false
+	if flows() {
+		t.Error("without simulation.sponge.redstone a powered sponge still absorbs")
+	}
+}
+
+func TestBlockedArrowEffects(t *testing.T) {
+	got := arrowEffects(plugin.MinecraftKey("poison"), nil)
+	if blockedEffect([]string{"poison"}, got) != "poison" {
+		t.Errorf("a poison arrow's effects %v are not blocked", got)
+	}
+	if blockedEffect([]string{"poison"}, arrowEffects(plugin.MinecraftKey("swiftness"), nil)) != "" {
+		t.Error("a swiftness arrow is blocked")
+	}
+	slow := []plugin.EffectInstance{{Effect: plugin.Effect(registry.MustMobEffect("minecraft:slowness"))}}
+	if blockedEffect([]string{"slow"}, arrowEffects(plugin.Key{}, slow)) != "slowness" {
+		t.Error("a custom slowness effect is not blocked by its legacy name")
+	}
+}
+
+func TestBlockedArrowLaunch(t *testing.T) {
+	srv, wg := start(t)
+	srv.Join("Alice")
+	w := wg.Server.Overworld()
+	wg.WorldConfig(w).BlockPotions = []string{"poison"}
+	arrow, err := w.Spawn(registry.EntityTypeArrow, plugin.Location{World: w, Pos: plugin.Vec3{X: 5.5, Y: 70, Z: 5.5}}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := &plugin.ProjectileLaunchEvent{Projectile: arrow.(plugin.Projectile)}
+	wg.Server.Events().Fire(e)
+	if e.Cancelled() {
+		t.Error("a plain arrow is refused")
+	}
+}

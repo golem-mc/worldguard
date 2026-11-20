@@ -59,7 +59,7 @@ func (p *protection) ruleFromTo(e *plugin.BlockFromToEvent) {
 	fs := e.From.State()
 	from := fs.Block()
 	water, lava, air := isWater(from), from == registry.BlockLava, isAir(from)
-	if cfg.SimulateSponge && water && p.spongeNear(e.To, cfg.SpongeRadius) {
+	if cfg.SimulateSponge && water && p.spongeNear(e.To, cfg.SpongeRadius, cfg.RedstoneSponges) {
 		e.SetCancelled(true)
 		return
 	}
@@ -81,13 +81,15 @@ func (p *protection) ruleFromTo(e *plugin.BlockFromToEvent) {
 	}
 }
 
-// spongeNear reports whether a sponge is within r blocks of b.
-func (p *protection) spongeNear(b plugin.Block, r int) bool {
+// spongeNear reports whether a sponge is within r blocks of b; with
+// redstone, a powered sponge does not count.
+// WorldGuard: WorldGuardBlockListener.onBlockFromTo
+func (p *protection) spongeNear(b plugin.Block, r int, redstone bool) bool {
 	for dx := -r; dx <= r; dx++ {
 		for dy := -r; dy <= r; dy++ {
 			for dz := -r; dz <= r; dz++ {
 				pos := plugin.BlockPos{X: b.Pos.X + dx, Y: b.Pos.Y + dy, Z: b.Pos.Z + dz}
-				if b.World.BlockState(pos).Block() == registry.BlockSponge {
+				if b.World.BlockState(pos).Block() == registry.BlockSponge && (!redstone || b.World.Power(pos) == 0) {
 					return true
 				}
 			}
