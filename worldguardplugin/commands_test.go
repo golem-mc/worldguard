@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/golem-mc/golem/plugin"
+	"github.com/golem-mc/golem/plugintest"
 	"github.com/golem-mc/golem/registry"
 )
 
@@ -133,4 +134,38 @@ func TestReloadRelaysLogToPlayer(t *testing.T) {
 	if m := p.Messages(1); len(m) != 0 {
 		t.Fatalf("got %v after reload", m)
 	}
+}
+
+type squatter func(plugin.Server) error
+
+func (f squatter) Enable(s plugin.Server) error { return f(s) }
+func (squatter) Disable()                       {}
+
+func TestGeneralCommandsReachableWhenNameTaken(t *testing.T) {
+	var regs []plugin.Registration
+	regs = append(regs, plugin.Registration{Name: "squatter", Plugin: squatter(func(s plugin.Server) error {
+		for _, n := range []string{"god", "heal"} {
+			if err := s.Commands().Register(plugin.Command{Name: n, Run: func(ctx *plugin.CommandContext) (int, error) {
+				ctx.Sender.SendMessage(plugin.Plain("squatter " + n))
+				return 1, nil
+			}}); err != nil {
+				return err
+			}
+		}
+		return nil
+	})})
+	regs = append(regs, plugin.Registered()...)
+	srv, wg := start(t, plugintest.WithPlugins(regs...))
+	p := join(srv, "Alice")
+	p.Op()
+
+	p.Run("/god")
+	contains(t, p.Messages(2), "squatter god")
+	p.Run("/worldguard:god")
+	contains(t, p.Messages(2), "God mode enabled! Use /ungod to disable.")
+	if !wg.invincible(p.Handle()) {
+		t.Fatal("god mode is off")
+	}
+	p.Run("/worldguard:heal")
+	contains(t, p.Messages(2), "Healed!")
 }
