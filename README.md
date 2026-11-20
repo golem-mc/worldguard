@@ -184,7 +184,7 @@ removing it). Besides the command nodes above:
 | `worldguard.build.entity.<entity>.place`, `.remove`, `.interact`, `.damage` | the same for entities, with `build-permission-nodes.enable` |
 | `worldguard.build.item.<item>.use` | using that item, with `build-permission-nodes.enable` |
 | `worldguard.override.lighter` | lighting fires where `ignition.block-lighter` is on |
-| `worldguard.override.potions` | drinking and throwing the potions `gameplay.block-potions` names |
+| `worldguard.override.potions` | drinking and throwing the potions, and shooting the tipped arrows, `gameplay.block-potions` names |
 | `worldguard.override.infinite-stack` | keeping stacks of negative size where `protection.remove-infinite-stacks` is on |
 | `worldguard.region.unlimited` | claim regions of any size and number |
 | `worldguard.region.addowner.unclaimed.<id>` | add the first owner to a region nobody owns |
@@ -239,6 +239,7 @@ Worlds are named as on Bukkit: the overworld by `level-name` (`world`), then
 | `dynamics.disable-leaf-decay` | `false` | leaves never decay; `dynamics.*` covers ice, snow, grass, vines, crops and copper |
 | `protection.item-durability` | `true` | tools wear out; `false` keeps them whole when breaking blocks |
 | `gameplay.block-potions` | `[]` | potion effects that are refused: `[speed, invisibility]` |
+| `simulation.sponge.enable`, `simulation.sponge.redstone` | `false` | sponges absorb water around them; with `redstone`, a powered sponge does not |
 | `use-particle-effects` | `true` | a puff of smoke where something was denied |
 
 Every option is described in WorldGuard's

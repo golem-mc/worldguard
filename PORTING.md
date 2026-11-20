@@ -104,7 +104,7 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
   CommandBook god mode interop (`WorldGuardCommandBookListener`, `WorldGuardServerListener`),
   the cancel debugging (`DebuggingListener`), and listeners for events golem does not
   fire: potion splashes and lingering clouds, leashing, lectern books, farmland moisture,
-  knockback (golem-mc/golem#166); redstone sponges and tipped arrows need golem-mc/golem#167.
+  knockback (golem-mc/golem#166).
 - **Debouncing** keeps upstream's windows (10 seconds for mobs on blocks and pickups, 30
   for hopper moves), with a plain map instead of Guava's cache.
 - **Commands** keep sk89q's rules: flags anywhere among the arguments, `-w world` value

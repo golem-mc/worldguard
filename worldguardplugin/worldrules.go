@@ -48,6 +48,7 @@ func (p *protection) registerWorldRules() {
 		}
 	}, early)
 	plugin.Listen(s, p.blockedPotion)
+	plugin.Listen(s, p.blockedArrow)
 }
 
 func (p *protection) ruleLightning(e *plugin.LightningStrikeEvent) {
@@ -158,20 +159,7 @@ func (p *protection) blockedPotion(e *event.UseItemEvent) {
 		return
 	}
 	cfg := p.cfg(e.World)
-	if len(cfg.BlockPotions) == 0 {
-		return
-	}
-	blocked := map[string]bool{}
-	for _, n := range cfg.BlockPotions {
-		blocked[effectName(n)] = true
-	}
-	var effect string
-	for _, n := range potionEffects(e.Item) {
-		if blocked[n] {
-			effect = shortName(n)
-			break
-		}
-	}
+	effect := blockedEffect(cfg.BlockPotions, potionEffects(e.Item))
 	if effect == "" {
 		return
 	}
@@ -189,4 +177,69 @@ func (p *protection) blockedPotion(e *event.UseItemEvent) {
 			"due to limitations (and because overly-reliable potion blocking is on).")
 		e.SetCancelled(true)
 	}
+}
+
+// blockedEffect answers the short name of the first of names that the
+// gameplay.block-potions list blocks, or "" when none is.
+func blockedEffect(blockList, names []string) string {
+	if len(blockList) == 0 {
+		return ""
+	}
+	blocked := map[string]bool{}
+	for _, n := range blockList {
+		blocked[effectName(n)] = true
+	}
+	for _, n := range names {
+		if blocked[n] {
+			return shortName(n)
+		}
+	}
+	return ""
+}
+
+// arrowEffects answers the names of the effects a tipped arrow applies.
+func arrowEffects(key plugin.Key, effects []plugin.EffectInstance) []string {
+	var out []string
+	if key != (plugin.Key{}) {
+		if id, ok := registry.PotionID(key.Namespace + ":" + key.Path); ok {
+			for _, e := range registry.PotionEffects(id) {
+				out = append(out, effectName(e.Effect))
+			}
+		}
+	}
+	for _, e := range effects {
+		out = append(out, effectName(registry.MobEffectName(int32(e.Effect))))
+	}
+	return out
+}
+
+// blockedArrow refuses tipped arrows that carry an effect gameplay.block-potions
+// names.
+// WorldGuard: BlockedPotionsListener.onProjectile
+func (p *protection) blockedArrow(e *plugin.ProjectileLaunchEvent) {
+	arrow, ok := e.Projectile.(plugin.Arrow)
+	if !ok {
+		return
+	}
+	cfg := p.cfg(arrow.World())
+	if len(cfg.BlockPotions) == 0 {
+		return
+	}
+	key, effects, tipped := arrow.Potion()
+	if !tipped {
+		return
+	}
+	effect := blockedEffect(cfg.BlockPotions, arrowEffects(key, effects))
+	if effect == "" {
+		return
+	}
+	shooter, _ := arrow.Shooter()
+	pl, _ := shooter.(plugin.Player)
+	if pl != nil && p.wg.HasPermission(pl, "worldguard.override.potions") {
+		return
+	}
+	if pl != nil {
+		tell(pl, "§cSorry, arrows with "+effect+" are presently disabled.")
+	}
+	e.SetCancelled(true)
 }
