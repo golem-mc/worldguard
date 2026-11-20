@@ -6,8 +6,8 @@ github.com/golem-mc/vault v0.0.0-20261120150336-8a79f26b77e7 h1:YqhHkVz18zsuJU57
 github.com/golem-mc/vault v0.0.0-20261120150336-8a79f26b77e7/go.mod h1:xJuOXWMFXfqRjH7z5k0XB3IcK2iXWrcBJG+jO6OeVkU=
 github.com/golem-mc/worldedit v0.0.0-20261120145747-5da4cc732af3 h1:2h5bqbWLEIwUxfRkLLzHrnHbC8P1WVbPpT8bR3jA8rA=
 github.com/golem-mc/worldedit v0.0.0-20261120145747-5da4cc732af3/go.mod h1:MsCNedMNJl3l2gFMsxZxxpvlaz98yucauZNRG4KR0KY=
-github.com/google/pprof v0.0.0-20261016150608-1facf8f91b50 h1:PlNWJRxu5APSV0pWqfIsZ0qt9OOGHSWfZQ4zvx+WgWs=
-github.com/google/pprof v0.0.0-20261016150608-1facf8f91b50/go.mod h1:yUo1AMMpsPIDFGuwDK8nLcf8+vvAd5l2O6JDZ6hpwrM=
+github.com/google/pprof v0.0.0-20261118010117-084b33a85f63 h1:dTH7+vX2yD0Xq3wXeU6R1s5uUuJC8o9sDW8g2k4bAg4=
+github.com/google/pprof v0.0.0-20261118010117-084b33a85f63/go.mod h1:yUo1AMMpsPIDFGuwDK8nLcf8+vvAd5l2O6JDZ6hpwrM=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/hashicorp/golang-lru/v2 v2.0.7 h1:a+bsQ5rvGLjzHuww6tVxozPZFVghXaHOwFs4luLUK2k=
