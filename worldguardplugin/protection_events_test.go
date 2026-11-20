@@ -127,4 +127,22 @@ func TestPotionLeashLecternMoistureAndKnockback(t *testing.T) {
 	if !k.Cancelled() {
 		t.Error("block-windcharge-explosions did not stop the knockback")
 	}
+
+	// a blow's knockback is judged like the damage: pvp deny stops it,
+	// nothing denied lets it through
+	pl, victim := alice.Handle(), bob.Handle()
+	pl.Teleport(plugin.Location{World: w, Pos: plugin.Vec3{X: 3.5, Y: 64, Z: 3.5}}, plugin.TeleportPlugin)
+	victim.Teleport(plugin.Location{World: w, Pos: plugin.Vec3{X: 4.5, Y: 64, Z: 3.5}}, plugin.TeleportPlugin)
+	kb := &plugin.EntityKnockbackEvent{Entity: victim, Pusher: pl, Knockback: plugin.Vec3{X: 1}}
+	fire(kb)
+	if kb.Cancelled() {
+		t.Error("a member's blow was stopped with nothing denied")
+	}
+	r.SetFlag(worldguard.FlagPVP, worldguard.StateDeny)
+	kb = &plugin.EntityKnockbackEvent{Entity: victim, Pusher: pl, Knockback: plugin.Vec3{X: 1}}
+	fire(kb)
+	if !kb.Cancelled() {
+		t.Error("pvp deny did not stop a player's knockback of another player")
+	}
+	r.SetFlag(worldguard.FlagPVP, nil)
 }
