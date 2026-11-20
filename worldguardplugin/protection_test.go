@@ -220,3 +220,96 @@ func TestHaltActivityStopsSpawnsAndExplosions(t *testing.T) {
 		t.Fatal("TNT broke blocks while activity was halted")
 	}
 }
+
+// regionBlock is a block of the overworld.
+func regionBlock(wg *WorldGuard, x, y, z int) plugin.Block {
+	return plugin.Block{World: wg.Server.Overworld(), Pos: plugin.BlockPos{X: x, Y: y, Z: z}}
+}
+
+func TestIgniteIsJudgedByTheSpreadingFire(t *testing.T) {
+	srv, wg := start(t, plugintest.WithGameMode("creative"))
+	alice := srv.Join("Alice")
+	addRegion(t, wg, "home", plugin.BlockPos{X: 0, Y: 0, Z: 0}, plugin.BlockPos{X: 10, Y: 100, Z: 10}, alice.Handle())
+	// The fire at 20 lies outside the region and is not a member's.
+	for _, c := range []struct {
+		name  string
+		src   plugin.Block
+		cause plugin.IgniteCause
+		deny  bool
+	}{
+		{"spread from outside", regionBlock(wg, 11, 64, 5), plugin.IgniteSpread, true},
+		{"spread from inside", regionBlock(wg, 5, 64, 5), plugin.IgniteSpread, false},
+		{"lava from outside", regionBlock(wg, 11, 64, 5), plugin.IgniteLava, true},
+		{"lava from inside", regionBlock(wg, 5, 64, 5), plugin.IgniteLava, false},
+	} {
+		e := &plugin.BlockIgniteEvent{Block: regionBlock(wg, 6, 64, 5), Cause: c.cause, Source: &c.src}
+		wg.Server.Events().Fire(e)
+		if e.Cancelled() != c.deny {
+			t.Errorf("%s: cancelled = %v, want %v", c.name, e.Cancelled(), c.deny)
+		}
+	}
+}
+
+func TestCombustIsJudgedByTheBlockOrEntityBehindIt(t *testing.T) {
+	srv, wg := start(t, plugintest.WithGameMode("creative"))
+	alice := srv.Join("Alice")
+	addRegion(t, wg, "home", plugin.BlockPos{X: 0, Y: 0, Z: 0}, plugin.BlockPos{X: 10, Y: 100, Z: 10}, alice.Handle())
+	cow, err := wg.Server.Overworld().Spawn(registry.EntityTypeCow, plugin.Location{World: wg.Server.Overworld(), Pos: plugin.Vec3{X: 5.5, Y: 64, Z: 5.5}}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	outside, inside := regionBlock(wg, 11, 64, 5), regionBlock(wg, 5, 64, 5)
+	for _, c := range []struct {
+		name string
+		e    *plugin.EntityCombustEvent
+		deny bool
+	}{
+		{"fire outside", &plugin.EntityCombustEvent{Entity: cow, ByBlock: &outside}, true},
+		{"fire inside", &plugin.EntityCombustEvent{Entity: cow, ByBlock: &inside}, false},
+		{"unknown", &plugin.EntityCombustEvent{Entity: cow}, false},
+	} {
+		wg.Server.Events().Fire(c.e)
+		if c.e.Cancelled() != c.deny {
+			t.Errorf("%s: cancelled = %v, want %v", c.name, c.e.Cancelled(), c.deny)
+		}
+	}
+}
+
+func TestHopperPullIsJudgedByTheHopper(t *testing.T) {
+	srv, wg := start(t)
+	srv.Join("Alice")
+	// The chest stands in a region, the hopper below it outside.
+	addRegion(t, wg, "vault", plugin.BlockPos{X: 0, Y: 64, Z: 0}, plugin.BlockPos{X: 0, Y: 64, Z: 0})
+	srv.Console("setblock 0 64 0 minecraft:chest{Items:[{Slot:0,id:\"minecraft:stone\",count:5}]}")
+	srv.Console("setblock 0 63 0 minecraft:hopper[facing=south]")
+	srv.RunTicks(20)
+	be, ok := wg.Server.Overworld().BlockEntity(plugin.BlockPos{X: 0, Y: 64, Z: 0})
+	if !ok {
+		t.Fatal("no chest")
+	}
+	if got := be.(plugin.Container).Inventory().Item(0); got.Count != 5 {
+		t.Fatalf("the hopper pulled from the region's chest: %d stone left", got.Count)
+	}
+}
+
+func TestEntityOriginJudgesTNTWhereItWasSpawned(t *testing.T) {
+	srv, wg := start(t)
+	srv.Join("Alice")
+	w := wg.Server.Overworld()
+	tnt, err := w.Spawn(registry.EntityTypeTnt, plugin.Location{World: w, Pos: plugin.Vec3{X: 5.5, Y: 64, Z: 5.5}}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tnt.Teleport(plugin.Location{World: w, Pos: plugin.Vec3{X: 50.5, Y: 64, Z: 50.5}}, plugin.TeleportPlugin)
+	p := &protection{wg: wg}
+	cfg := wg.WorldConfig(w)
+	defer func(old bool) { cfg.UsePaperEntityOrigin = old }(cfg.UsePaperEntityOrigin)
+	cfg.UsePaperEntityOrigin = false
+	if x := p.entityLocation(tnt).Pos.X; x != 50.5 {
+		t.Errorf("without the option the TNT stands at x=%v, want 50.5", x)
+	}
+	cfg.UsePaperEntityOrigin = true
+	if x := p.entityLocation(tnt).Pos.X; x != 5.5 {
+		t.Errorf("with the option the TNT stands at x=%v, want its origin 5.5", x)
+	}
+}

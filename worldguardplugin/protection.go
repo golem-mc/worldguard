@@ -113,7 +113,7 @@ func (p *protection) associable(c event.Cause) worldguard.RegionAssociable {
 	case plugin.Player:
 		return p.wg.WrapPlayer(root)
 	case plugin.Entity:
-		return p.overlap(root.Location())
+		return p.overlap(p.entityLocation(root))
 	case plugin.Block:
 		return p.overlap(blockLoc(root))
 	}
@@ -267,4 +267,22 @@ func (d *debounce) fire(p *protection, key any, original interface{ SetCancelled
 	if cancelled {
 		original.SetCancelled(true)
 	}
+}
+
+// entityLocation answers where an entity counts as standing for regions:
+// primed TNT, TNT minecarts and falling blocks stand where they were
+// spawned when the world uses the entity origin. WorldGuard:
+// AbstractListener.createRegionAssociable
+func (p *protection) entityLocation(e plugin.Entity) plugin.Location {
+	loc := e.Location()
+	if loc.World == nil || !p.cfg(loc.World).UsePaperEntityOrigin {
+		return loc
+	}
+	switch e.Type() {
+	case registry.EntityTypeTnt, registry.EntityTypeTntMinecart, registry.EntityTypeFallingBlock:
+		if o, ok := e.Origin(); ok {
+			return o
+		}
+	}
+	return loc
 }
