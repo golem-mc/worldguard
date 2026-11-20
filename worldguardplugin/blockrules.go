@@ -23,6 +23,7 @@ func (p *protection) registerBlockRules() {
 	plugin.Listen(s, p.ruleSpread, high)
 	plugin.Listen(s, func(e *plugin.BlockGrowEvent) { p.ruleGrow(e, e.Block, e.NewState.Block()) }, high)
 	plugin.Listen(s, p.ruleFade, high)
+	plugin.Listen(s, p.ruleMoisture, high)
 	plugin.Listen(s, func(e *plugin.BlockExplodeEvent) {
 		if p.wg.Config.ActivityHaltToggle || p.cfg(e.Block.World).BlockOtherExplosions {
 			e.SetCancelled(true)
@@ -306,6 +307,14 @@ func (p *protection) ruleFade(e *plugin.BlockFadeEvent) {
 		return
 	}
 	if off || p.stateDenied(e.Block, flag) {
+		e.SetCancelled(true)
+	}
+}
+
+// ruleMoisture keeps farmland's moisture where it may not change.
+// WorldGuard: onMoistureChange
+func (p *protection) ruleMoisture(e *plugin.MoistureChangeEvent) {
+	if p.cfg(e.Block.World).DisableSoilMoistureChange || p.stateDenied(e.Block, worldguard.FlagMoistureChange) {
 		e.SetCancelled(true)
 	}
 }

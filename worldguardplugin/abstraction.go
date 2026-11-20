@@ -54,6 +54,11 @@ func (p *protection) registerAbstraction() {
 	plugin.Listen(s, p.onDispense, skip)
 	plugin.Listen(s, p.onCauldronChange, skip)
 	plugin.Listen(s, p.onEntityTransform, skip)
+	plugin.Listen(s, p.onPotionSplash, skip)
+	plugin.Listen(s, p.onLingeringSplash, skip)
+	plugin.Listen(s, p.onCloudApply, skip)
+	plugin.Listen(s, p.onLeash, skip)
+	plugin.Listen(s, p.onTakeLecternBook, skip)
 }
 
 func (p *protection) onBlockBreak(e *plugin.BlockBreakEvent) {
@@ -1032,4 +1037,53 @@ func (p *protection) onEntityTransform(e *plugin.EntityTransformEvent) {
 	}
 	b := plugin.Block{World: e.Entity.World(), Pos: e.Entity.Pos().Block()}
 	p.fireToCancel(e, &event.DamageEntityEvent{Entity: event.NewEntity(e, p.cause(b), e.Entity)})
+}
+
+// onPotionSplash spares every entity a potion may not reach, and the whole
+// splash when none is left. WorldGuard: onPotionSplash
+func (p *protection) onPotionSplash(e *plugin.PotionSplashEvent) {
+	cause := p.cause(e.Potion)
+	blocked := 0
+	for ent := range e.Affected {
+		ev := &event.UseEntityEvent{Entity: event.NewEntity(e, cause, ent)}
+		ev.AddFlags(worldguard.FlagPotionSplash)
+		if p.fireAndTest(ev) {
+			e.Affected[ent] = 0
+			blocked++
+		}
+	}
+	if blocked == len(e.Affected) {
+		e.SetCancelled(true)
+	}
+}
+
+// onLingeringSplash asks whether the potion may make its cloud there.
+// WorldGuard: onLingeringSplash
+func (p *protection) onLingeringSplash(e *plugin.LingeringPotionSplashEvent) {
+	p.fireToCancel(e, &event.SpawnEntityEvent{Original: e, Cause: p.cause(e.Potion),
+		World: e.Potion.World(), Target: e.Potion.Location(), Type: registry.EntityTypeAreaEffectCloud})
+}
+
+// onCloudApply drops the entities a cloud may not affect. WorldGuard:
+// onAreaEffectCloudApply
+func (p *protection) onCloudApply(e *plugin.AreaEffectCloudApplyEvent) {
+	cause := p.cause(e.Cloud)
+	e.Affected = slices.DeleteFunc(e.Affected, func(ent plugin.LivingEntity) bool {
+		ev := &event.UseEntityEvent{Entity: event.NewEntity(e, cause, ent)}
+		ev.AddFlags(worldguard.FlagPotionSplash)
+		return p.fireAndTest(ev)
+	})
+}
+
+// onLeash judges leashing and unleashing a mob as using it. WorldGuard:
+// onPlayerLeash, onPlayerUnleash
+func (p *protection) onLeash(e *plugin.PlayerLeashEntityEvent) {
+	ev := &event.UseEntityEvent{Entity: event.NewEntity(e, p.cause(e.Player), e.Entity)}
+	ev.AddFlags(worldguard.FlagRide, worldguard.FlagInteract)
+	p.fireToCancel(e, ev)
+}
+
+// onTakeLecternBook judges taking a lectern's book as opening it.
+func (p *protection) onTakeLecternBook(e *plugin.PlayerTakeLecternBookEvent) {
+	p.fireToCancel(e, &event.UseBlockEvent{Blocks: event.NewBlocks(e, p.cause(e.Player), e.Block.World, registry.BlockLectern, e.Block.Pos)})
 }

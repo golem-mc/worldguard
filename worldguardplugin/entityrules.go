@@ -27,6 +27,7 @@ func (p *protection) registerEntityRules() {
 		}
 	}, plugin.ListenOptions{Priority: plugin.High})
 	plugin.Listen(s, p.ruleDamage, high)
+	plugin.Listen(s, p.ruleKnockback, high)
 	plugin.Listen(s, p.ruleExplode, high)
 	plugin.Listen(s, p.rulePrime, high)
 	plugin.Listen(s, p.ruleCreatureSpawn, high)
@@ -595,6 +596,34 @@ func (p *protection) ruleHangingBreak(e *plugin.HangingBreakEvent) {
 	}
 	if painting && (cfg.BlockEntityPaintingDestroy || denied(worldguard.FlagEntityPaintingDestroy)) ||
 		frame && (cfg.BlockEntityItemFrameDestroy || denied(worldguard.FlagEntityItemFrameDestroy)) {
+		e.SetCancelled(true)
+	}
+}
+
+// ruleKnockback keeps a wind charge from pushing what its burst may not
+// touch, and a blow from pushing what it may not damage.
+func (p *protection) ruleKnockback(e *plugin.EntityKnockbackEvent) {
+	if e.Pusher == nil {
+		return
+	}
+	t := e.Pusher.Type()
+	if t != registry.EntityTypeWindCharge && t != registry.EntityTypeBreezeWindCharge {
+		p.fireToCancel(e, &event.DamageEntityEvent{Entity: event.NewEntity(e, p.cause(e.Pusher), e.Entity)})
+		return
+	}
+	cfg := p.cfg(e.Entity.World())
+	if cfg.BlockWindChargeExplosions {
+		e.SetCancelled(true)
+		return
+	}
+	if !cfg.UseRegions {
+		return
+	}
+	var who worldguard.RegionAssociable
+	if pl, ok := e.Entity.(plugin.Player); ok {
+		who = p.wg.WrapPlayer(pl)
+	}
+	if cfg.ExplosionFlagCancellation && !p.query().TestState(e.Entity.Location(), who, explosionFlag(t)) {
 		e.SetCancelled(true)
 	}
 }
