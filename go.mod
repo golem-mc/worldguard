@@ -3,7 +3,7 @@ module github.com/golem-mc/worldguard
 go 1.27.4
 
 require (
-	github.com/golem-mc/golem v0.0.0-20261120193235-d9522f09c629
+	github.com/golem-mc/golem v0.0.0-20261120210134-4be9dcafc06f
 	github.com/golem-mc/vault v0.0.0-20261120150336-8a79f26b77e7
 	github.com/golem-mc/worldedit v0.0.0-20261120145747-5da4cc732af3
 	github.com/google/pprof v0.0.0-20261118010117-084b33a85f63
