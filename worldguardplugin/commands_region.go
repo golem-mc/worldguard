@@ -970,9 +970,22 @@ func (wg *WorldGuard) cmdToggleBypass(c *cmdArgs) error {
 	return nil
 }
 
-// checkSpawnOverlap would warn that r overlaps vanilla's spawn protection,
-// which golem's plugin API does not expose; it reports no overlap.
-// RegionCommandsBase.checkSpawnOverlap
-func (wg *WorldGuard) checkSpawnOverlap(plugin.CommandSender, plugin.World, *worldguard.Region) bool {
-	return false
+// checkSpawnOverlap warns that r overlaps vanilla's spawn protection, which
+// only the overworld has. RegionCommandsBase.checkSpawnOverlap,
+// BukkitWorldGuardPlatform.getSpawnProtection
+func (wg *WorldGuard) checkSpawnOverlap(s plugin.CommandSender, w plugin.World, r *worldguard.Region) bool {
+	radius := wg.Server.SpawnProtection()
+	if radius <= 0 || w.Key() != plugin.MinecraftKey("overworld") {
+		return false
+	}
+	at := w.SpawnPoint().Pos.Block()
+	spawn, err := worldguard.NewCuboidRegion("__spawn_protection__",
+		plugin.BlockPos{X: at.X - radius, Y: w.MinY(), Z: at.Z - radius},
+		plugin.BlockPos{X: at.X + radius, Y: w.MinY() + w.Height() - 1, Z: at.Z + radius})
+	if err != nil || len(spawn.IntersectingRegions([]*worldguard.Region{r})) == 0 {
+		return false
+	}
+	s.SendMessage(txt("Warning!", "red").Append(txt(" This region overlaps vanilla's spawn protection. WorldGuard cannot "+
+		"override this, and only server operators will be able to interact with this area.", "white")))
+	return true
 }
