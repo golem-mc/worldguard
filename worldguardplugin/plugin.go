@@ -28,6 +28,7 @@ func init() {
 type WorldGuard struct {
 	Server plugin.Server
 	Log    *slog.Logger
+	relay  *logRelay
 	Config *config.Manager
 
 	regions  *regionContainer
@@ -53,7 +54,8 @@ func Get() (*WorldGuard, bool) {
 // the listeners. WorldGuard: WorldGuardPlugin.onEnable
 func (wg *WorldGuard) Enable(s plugin.Server) error {
 	wg.Server = s
-	wg.Log = s.Logger()
+	wg.relay = newLogRelay(s.Logger().Handler())
+	wg.Log = slog.New(wg.relay)
 	wg.Config = &config.Manager{DataDir: s.DataDir(), Log: wg.Log}
 	if err := wg.Config.Load(wg.worldNames()); err != nil {
 		wg.Log.Error("Error saving configuration: " + err.Error())
