@@ -66,6 +66,7 @@ func wgVersion(wg *WorldGuard, a *cmdArgs) error {
 // wgReload reads the configuration and every world's regions again.
 // WorldGuard: WorldGuardCommands.reload
 func wgReload(wg *WorldGuard, a *cmdArgs) error {
+	defer wg.relayLog(a.sender)()
 	wg.Config.Unload()
 	if err := wg.Config.Load(wg.worldNames()); err != nil {
 		a.sender.SendMessage(chat.Error("Error while reloading: " + err.Error()))

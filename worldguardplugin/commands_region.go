@@ -1,10 +1,8 @@
 package worldguardplugin
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"math"
 	"slices"
 	"strings"
@@ -799,40 +797,22 @@ func (wg *WorldGuard) cmdMigrateDB(c *cmdArgs) error {
 	return errorf("The driver specified as 'to' does not seem to be supported in your version of WorldGuard.")
 }
 
-// chatLog is a log that also shows its records to a player in chat.
-// WorldGuard: LoggerToChatHandler
-type chatLog struct {
-	slog.Handler
-	to plugin.CommandSender
-}
-
-func (h chatLog) Handle(ctx context.Context, r slog.Record) error {
-	level := "INFO"
-	switch {
-	case r.Level >= slog.LevelError:
-		level = "SEVERE"
-	case r.Level >= slog.LevelWarn:
-		level = "WARNING"
-	}
-	printDebug(h.to, level+": "+r.Message)
-	return h.Handler.Handle(ctx, r)
-}
-
-// migrationLog answers the log a migration run by s writes to.
-func (wg *WorldGuard) migrationLog(s plugin.CommandSender) *slog.Logger {
+// relayLog relays the log to s while it is a player, until the returned
+// function is called.
+func (wg *WorldGuard) relayLog(s plugin.CommandSender) (stop func()) {
 	if _, ok := s.(plugin.Player); ok {
-		return slog.New(chatLog{Handler: wg.Log.Handler(), to: s})
+		return wg.relay.relayTo(s)
 	}
-	return wg.Log
+	return func() {}
 }
 
 func (wg *WorldGuard) cmdMigrateUUID(c *cmdArgs) error {
 	if !wg.perms(c.sender).mayMigrateRegionNames() {
 		return errNoPermission
 	}
-	log := wg.migrationLog(c.sender)
+	defer wg.relayLog(c.sender)()
 	printInfo(c.sender, "Now performing migration... this may take a while.")
-	wg.regions.migrate(&uuidMigration{wg: wg, log: log, keepUnresolved: wg.Config.KeepUnresolvedNames}, log)
+	wg.regions.migrate(&uuidMigration{wg: wg, log: wg.Log, keepUnresolved: wg.Config.KeepUnresolvedNames}, wg.Log)
 	printInfo(c.sender, "Migration complete!")
 	return nil
 }
@@ -845,11 +825,12 @@ func (wg *WorldGuard) cmdMigrateHeights(c *cmdArgs) error {
 		return errorf("This command is potentially dangerous.\n" +
 			"Please ensure you have made a backup of your data, and then re-enter the command with -y tacked on at the end to proceed.")
 	}
-	m := &heightMigration{wg: wg, log: wg.migrationLog(c.sender)}
+	defer wg.relayLog(c.sender)()
+	m := &heightMigration{wg: wg, log: wg.Log}
 	if w := c.optionalWorld(); w != nil {
 		m.world = wg.WorldName(w)
 	}
-	wg.regions.migrate(m, m.log)
+	wg.regions.migrate(m, wg.Log)
 	printInfo(c.sender, "Migration complete!")
 	return nil
 }
