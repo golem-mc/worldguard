@@ -766,9 +766,24 @@ func (p *protection) onFish(e *plugin.PlayerFishEvent) {
 }
 
 func (p *protection) onProjectileHit(e *plugin.ProjectileHitEvent) {
-	if e.Projectile.Type() == registry.EntityTypeFishingBobber && e.Hit.Entity != nil {
+	if e.Hit.Entity != nil && isBoundBobber(e.Projectile) {
 		p.fireToCancel(e, &event.DamageEntityEvent{Entity: event.NewEntity(e, p.cause(e.Projectile), e.Hit.Entity)})
 	}
+}
+
+// isBoundBobber reports whether the projectile is a fishing bobber. golem
+// hands listeners an unbound placeholder, whose methods panic, when the body
+// is already gone at the hit; such a hit is not judged.
+func isBoundBobber(pr plugin.Projectile) (bobber bool) {
+	if pr == nil {
+		return false
+	}
+	defer func() {
+		if recover() != nil {
+			bobber = false
+		}
+	}()
+	return pr.Type() == registry.EntityTypeFishingBobber
 }
 
 func (p *protection) onExpBottle(e *plugin.ExpBottleEvent) {
