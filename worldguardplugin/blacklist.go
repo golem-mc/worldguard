@@ -51,6 +51,12 @@ func (wg *WorldGuard) registerBlacklist() {
 		if b != nil && !b.Check(blacklist.Event{Type: blacklist.Dispense, Pos: e.Block.Pos,
 			Target: blacklist.ItemTarget(e.Item.Item)}, false, false) {
 			e.SetCancelled(true)
+			return
+		}
+		// A dispenser dressing a player. WorldGuard: BlacklistListener.onBlockDispenseArmor
+		if pl, ok := e.Target.(plugin.Player); ok && b != nil && isArmor(e.Item.Item) &&
+			!b.Check(wg.itemEvent(blacklist.Equip, pl, e.Item), false, false) {
+			e.SetCancelled(true)
 		}
 	}, opts)
 	plugin.Listen(s, wg.blacklistClick, opts)
