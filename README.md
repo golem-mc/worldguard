@@ -146,8 +146,8 @@ Region ids may contain letters, digits and `_ , ' - + /`.
 |---|---|---|
 | `/wg version` | shows the version | none |
 | `/wg reload` | reads the configuration and every world's regions again | `worldguard.reload` |
-| `/wg report` | writes `plugins/worldguard/report.txt` about the server, the configuration and your regions | `worldguard.report` |
-| `/wg profile [minutes]` | records the server's CPU use for 1 to 10 minutes (default 5) into `plugins/worldguard/profile.pprof` | `worldguard.profile` |
+| `/wg report [-p]` | writes `plugins/worldguard/report.txt` about the server, the configuration and your regions; `-p` also uploads it to EngineHub's paste service and prints the link | `worldguard.report` (`-p`: `worldguard.report.pastebin`) |
+| `/wg profile [-p] [minutes]` | records the server's CPU use for 1 to 10 minutes (default 5) into `plugins/worldguard/profile.pprof` | `worldguard.profile` (`-p`: `worldguard.report.pastebin`) |
 | `/wg stopprofile` | cancels a running profile | `worldguard.profile` |
 | `/wg flushstates [player]` (alias `clearstates`) | applies the region flags afresh to everyone, or one player | `worldguard.flushstates` |
 | `/wg debug testbreak [-t] [-s] <player>` | pretends the player breaks the block they look at and tells whether a listener blocked it, and at which priority; `-t` traces from that player's view rather than yours (needed from the console), `-s` writes the report to the console | `worldguard.debug.event` |
@@ -320,7 +320,6 @@ players the server knows, then with Mojang, as WorldGuard does.
 - `/rg` completes sub-commands, region ids, flag names and flag values with Tab.
 - `/wg profile` writes a Go CPU profile (`profile.pprof`, read with `go tool pprof`) of the
   whole server instead of a text report of Java threads; `-i` and `-t` change nothing.
-- `/wg report -p` and `/wg profile -p` do not paste to EngineHub's paste service.
 - `/wg debug` reports the listener priority at which an action was blocked rather than the
   plugin, and `-s` writes the report to the console instead of pasting a stack trace.
 - Greeting and farewell titles always use the default fade times.

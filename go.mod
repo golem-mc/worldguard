@@ -6,6 +6,7 @@ require (
 	github.com/golem-mc/golem v0.0.0-20261120160404-c0c9983fdd00
 	github.com/golem-mc/vault v0.0.0-20261120150336-8a79f26b77e7
 	github.com/golem-mc/worldedit v0.0.0-20261120145747-5da4cc732af3
+	github.com/google/pprof v0.0.0-20261118010117-084b33a85f63
 	github.com/google/uuid v1.6.0
 	go.yaml.in/yaml/v4 v4.0.0
 )

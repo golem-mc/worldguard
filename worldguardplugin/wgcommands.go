@@ -178,7 +178,7 @@ func wgReport(wg *WorldGuard, a *cmdArgs) error {
 	}
 	a.sender.SendMessage(chat.Info("WorldGuard report written to " + dest))
 	if a.has('p') {
-		a.sender.SendMessage(chat.Error("Pasting reports is not available on golem."))
+		pasteTo(wg, a.sender, r.b.String(), "WorldGuard report: ", ".report")
 	}
 	return nil
 }
@@ -255,6 +255,7 @@ func wgProfile(wg *WorldGuard, a *cmdArgs) error {
 		plugin.Plain("/wg stopprofile").Color("aqua").OnClick(plugin.SuggestCommand, "/wg stopprofile"),
 		plugin.Plain(" at any time to cancel CPU profiling.").Color("gray")))
 	sender := a.sender
+	paste := a.has('p')
 	go func() {
 		var cancelled bool
 		select {
@@ -279,6 +280,14 @@ func wgProfile(wg *WorldGuard, a *cmdArgs) error {
 				return
 			}
 			sender.SendMessage(chat.Info("CPU profiling data written to " + dest))
+			if paste {
+				text, err := profileText(dest)
+				if err != nil {
+					sender.SendMessage(chat.Error("Failed to submit paste: " + err.Error()))
+					return
+				}
+				pasteTo(wg, sender, text, "Profile result: ", ".profile")
+			}
 		})
 	}()
 	return nil
