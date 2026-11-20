@@ -28,6 +28,7 @@ func (p *protection) registerAbstraction() {
 	plugin.Listen(s, p.onEntityInteract, skip)
 	plugin.Listen(s, p.onBlockFertilize, skip)
 	plugin.Listen(s, p.onBlockIgnite, skip)
+	plugin.Listen(s, p.onEntityCombust, skip)
 	plugin.Listen(s, p.onSignChange, skip)
 	plugin.Listen(s, p.onBedEnter, skip)
 	plugin.Listen(s, p.onBucket, skip)
@@ -584,40 +585,34 @@ func (p *protection) onBlockFertilize(e *plugin.BlockFertilizeEvent) {
 	p.fireToCancel(e, &event.PlaceBlockEvent{Blocks: event.NewBlocks(e, cause, e.Block.World, e.Blocks[0].State.Block(), changePositions(e.Blocks)...)})
 }
 
-// onBlockIgnite asks whether fire may be placed. The server does not say
-// which fire or lava spread it, so a fire or lava block nearby stands in.
-// WorldGuard: onBlockIgnite
+// onBlockIgnite asks whether fire may be placed, by the player or entity
+// that lit it, or the fire or lava block that spread it. WorldGuard: onBlockIgnite
 func (p *protection) onBlockIgnite(e *plugin.BlockIgniteEvent) {
-	var cause event.Cause
+	cause := event.Unknown()
 	switch {
 	case e.Player != nil:
 		cause = p.cause(e.Player)
 	case e.Entity != nil:
 		cause = p.cause(e.Entity)
-	case e.Cause == plugin.IgniteSpread:
-		cause = p.causeNear(e.Block, isFire, 1, -1, 4)
-	case e.Cause == plugin.IgniteLava:
-		cause = p.causeNear(e.Block, isLava, 2, -1, 1)
-	default:
-		cause = event.Unknown()
+	case e.Source != nil:
+		cause = p.cause(*e.Source)
 	}
 	p.fireToCancel(e, &event.PlaceBlockEvent{Blocks: event.NewBlocks(e, cause, e.Block.World, registry.BlockFire, e.Block.Pos)})
 }
 
-// causeNear answers the cause of a block that matches near b, within r
-// blocks sideways and from dy0 to dy1 vertically; unknown when none.
-func (p *protection) causeNear(b plugin.Block, match func(registry.Block) bool, r, dy0, dy1 int) event.Cause {
-	for dy := dy0; dy <= dy1; dy++ {
-		for dx := -r; dx <= r; dx++ {
-			for dz := -r; dz <= r; dz++ {
-				n := plugin.Block{World: b.World, Pos: plugin.BlockPos{X: b.Pos.X + dx, Y: b.Pos.Y + dy, Z: b.Pos.Z + dz}}
-				if (dx != 0 || dy != 0 || dz != 0) && match(n.State().Block()) {
-					return p.cause(n)
-				}
-			}
-		}
+// onEntityCombust judges an entity set alight by a block or another
+// entity. WorldGuard: onEntityCombust
+func (p *protection) onEntityCombust(e *plugin.EntityCombustEvent) {
+	var cause event.Cause
+	switch {
+	case e.ByBlock != nil:
+		cause = p.cause(*e.ByBlock)
+	case e.ByEntity != nil:
+		cause = p.cause(e.ByEntity)
+	default:
+		return
 	}
-	return event.Unknown()
+	p.fireToCancel(e, &event.DamageEntityEvent{Entity: event.NewEntity(e, cause, e.Entity)})
 }
 
 func (p *protection) onSignChange(e *plugin.SignChangeEvent) {
@@ -911,13 +906,12 @@ func (p *protection) holderUse(original interface {
 }
 
 // onInventoryMove judges a hopper or hopper minecart moving items between
-// containers. The server does not say which side started the move, so a
-// hopper or hopper minecart among the two stands in. WorldGuard: onInventoryMoveItem
+// containers, judged by the holder that started the move. WorldGuard: onInventoryMoveItem
 func (p *protection) onInventoryMove(e *plugin.InventoryMoveItemEvent) {
 	src, dst := e.Source.Holder(), e.Destination.Holder()
-	initiator := dst
-	if isHopper(src) || !isHopper(dst) {
-		initiator = src
+	initiator := src
+	if e.Initiator != nil {
+		initiator = e.Initiator.Holder()
 	}
 	if !isHopper(initiator) {
 		return
