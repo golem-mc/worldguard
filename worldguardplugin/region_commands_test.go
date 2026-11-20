@@ -345,3 +345,19 @@ func TestCompletion(t *testing.T) {
 		t.Errorf("flag values: %q", got)
 	}
 }
+
+func TestDefineWarnsAboutSpawnProtection(t *testing.T) {
+	srv, _ := startCommands(t, plugintest.Ops("alice"), plugintest.WithSpawnProtection(16))
+	alice := srv.Join("alice")
+	spawn := alice.Handle().World().SpawnPoint().Pos.Block()
+	selectCuboid(t, srv, alice, spawn.Offset(plugin.North, 2), spawn.Offset(plugin.South, 2))
+	alice.Run("/rg define nearspawn")
+	await(t, alice, "This region overlaps vanilla's spawn protection.")
+
+	far := spawn.Offset(plugin.East, 100)
+	selectCuboid(t, srv, alice, far, far.Offset(plugin.East, 3))
+	alice.Run("/rg define farfromspawn")
+	if msgs := await(t, alice, "A new region has been made named 'farfromspawn'."); said(msgs, "spawn protection") {
+		t.Errorf("a region far from spawn was reported to overlap it: %q", msgs)
+	}
+}

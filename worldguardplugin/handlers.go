@@ -463,7 +463,7 @@ func (h *gameModeFlag) update(s *session, p *localPlayer, v plugin.GameMode, ok 
 			}
 			p.SetGameMode(v)
 		} else if !h.hasOriginal {
-			h.original, h.hasOriginal = s.m.wg.defaultGameMode(), true
+			h.original, h.hasOriginal = s.m.wg.Server.DefaultGameMode(), true
 		}
 		return
 	}

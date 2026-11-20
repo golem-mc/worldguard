@@ -71,7 +71,6 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
   types that upstream only distinguishes for custom handlers (glide, swim, ride) are all
   `move`. `GameModeFlag`'s game mode change block is not ported: upstream never sets the
   value it compares against, so it never fires.
-- **The game-mode flag's default** is read from `server.properties` (golem-mc/golem#158).
 - **Titles** always use the default fade times (golem-mc/golem#159).
 - **Commands** are registered one per name; a name another plugin holds is skipped with a
   warning (golem-mc/golem#160). They do not set golem's command permission, so a player
@@ -125,8 +124,6 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
   cache.
 - **Permissions** resolve `a.b.*` and `*` set by the permission plugin when the node
   itself is not set, as WorldEdit's `DinnerPermsResolver` (and LuckPerms through Vault) do.
-- **Spawn protection**: golem does not expose the radius, so no region is reported to
-  overlap it (golem-mc/worldguard#13).
 - **Tab completion** of `/rg` (sub-commands, region ids, flag names and values, `-w`
   worlds) is the port's; upstream completes only player names.
 - **`/rg migratedb`** knows the `yaml` and `mysql` drivers and reports MySQL as

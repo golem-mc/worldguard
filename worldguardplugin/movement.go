@@ -1,12 +1,7 @@
 package worldguardplugin
 
 import (
-	"bufio"
-	"log/slog"
-	"os"
-	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/golem-mc/golem/plugin"
 	"github.com/golem-mc/worldguard"
@@ -158,27 +153,4 @@ func (wg *WorldGuard) onJoin(p plugin.Player) {
 		p.SendMessage(plugin.Plain("Fire spread is currently globally disabled for this world.").Color("yellow"))
 	}
 	wg.sessions.process(p)
-}
-
-// defaultGameMode answers server.properties' gamemode, where the game-mode
-// flag returns a player who joined in the flag's mode.
-func (wg *WorldGuard) defaultGameMode() plugin.GameMode {
-	root := filepath.Dir(wg.Server.WorldFolder(plugin.MinecraftKey("overworld")))
-	f, err := os.Open(filepath.Join(root, "server.properties"))
-	if err != nil {
-		return plugin.Survival
-	}
-	defer f.Close()
-	sc := bufio.NewScanner(f)
-	for sc.Scan() {
-		k, v, ok := strings.Cut(sc.Text(), "=")
-		if !ok || strings.TrimSpace(k) != "gamemode" {
-			continue
-		}
-		if m, ok := worldguard.GameModes.Lookup(strings.TrimSpace(v)); ok {
-			return m.(plugin.GameMode)
-		}
-		wg.Log.Debug("unknown gamemode in server.properties", slog.String("value", v))
-	}
-	return plugin.Survival
 }

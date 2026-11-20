@@ -120,6 +120,24 @@ func TestGameModeAndHealFlags(t *testing.T) {
 	}
 }
 
+func TestGameModeFlagRestoresTheDefaultGameMode(t *testing.T) {
+	srv, wg := start(t)
+	withRegions(t, wg, cuboid("arena", 100, 110, "game-mode: adventure"))
+	p := join(srv, "Carol")
+	h := p.Handle()
+	srv.Host().SetDefaultGameMode(plugin.Creative)
+	// Already in the flag's mode on entry, the player returns to the
+	// server's default game mode on leaving.
+	h.SetGameMode(plugin.Adventure)
+	teleport(p, 105)
+	srv.RunTicks(sessionTickPeriod + 2)
+	teleport(p, 50)
+	srv.RunTicks(1)
+	if h.GameMode() != plugin.Creative {
+		t.Errorf("game mode %v after leaving, want the default creative", h.GameMode())
+	}
+}
+
 // join joins a player and lets their join finish.
 func join(srv *plugintest.Server, name string) *plugintest.Player {
 	p := srv.Join(name)
