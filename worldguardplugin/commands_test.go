@@ -123,13 +123,12 @@ func TestReloadRelaysLogToPlayer(t *testing.T) {
 	p := join(srv, "Alice")
 	p.Op()
 	p.Run("/wg reload")
-	msgs := p.Messages(40)
+	msgs := p.Messages(2)
 	contains(t, msgs, "INFO: Loaded configuration for world")
 	contains(t, msgs, "WorldGuard configuration reloaded.")
 	if wg.relay.shared.player != nil {
 		t.Fatal("the relay is still attached")
 	}
-	p.Messages(40)
 	wg.Log.Info("later")
 	if m := p.Messages(1); len(m) != 0 {
 		t.Fatalf("got %v after reload", m)
