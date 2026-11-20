@@ -29,7 +29,6 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
 | `worldguardplugin/materials.go`, `materials_table.go`, `entities.go` | Which blocks, items and entities count as what | `bukkit/util/Materials`, `Entities`, `Blocks` |
 | `internal/blacklist/` | `blacklist.txt`: parsing, entries, actions, console and file loggers | `blacklist/` |
 | `worldguardplugin/blacklist.go` | Loads each world's blacklist and checks WorldGuard's events and golem's inventory events against it | `BlacklistListener`, `BukkitWorldConfiguration` (blacklist loading) |
-| `cmd/server/` | A server with WorldGuard and WorldEdit built in | — |
 
 ## Decisions
 
