@@ -331,9 +331,18 @@ func TestPoweredSpongeStopsAbsorbing(t *testing.T) {
 	if flows() {
 		t.Error("water flows next to an unpowered sponge")
 	}
-	power.Set(plugin.BlockState(registry.BlockRedstoneBlock.DefaultState()))
+	lever := plugin.DefaultState(registry.BlockLever)
+	lever, _ = lever.With(registry.PropFace, "wall")
+	lever, _ = lever.With(registry.PropFacing, "east")
+	off, _ := lever.With(registry.PropPowered, "false")
+	on, _ := lever.With(registry.PropPowered, "true")
+	power.Set(plugin.BlockState(off))
+	if flows() {
+		t.Error("water flows next to a sponge with its lever off")
+	}
+	power.Set(plugin.BlockState(on))
 	if !flows() {
-		t.Error("water is absorbed by a powered sponge")
+		t.Error("water is absorbed by a sponge powered by a lever")
 	}
 	cfg.RedstoneSponges = false
 	if flows() {
@@ -402,5 +411,48 @@ func TestHostKeysRefuseWrongHost(t *testing.T) {
 	p.onLogin(e)
 	if e.Result != plugin.LoginAllowed {
 		t.Errorf("a player without a host key was refused")
+	}
+}
+
+// tippedArrow is a real arrow that reports a potion, as golem's plugintest
+// cannot set one.
+type tippedArrow struct {
+	plugin.Arrow
+	key     plugin.Key
+	shooter plugin.Entity
+}
+
+func (a tippedArrow) Potion() (plugin.Key, []plugin.EffectInstance, bool) {
+	return a.key, nil, true
+}
+
+func (a tippedArrow) Shooter() (plugin.Entity, bool) { return a.shooter, a.shooter != nil }
+
+func TestBlockedArrowRefusesTippedArrow(t *testing.T) {
+	srv, wg := start(t)
+	alice := srv.Join("Alice")
+	w := wg.Server.Overworld()
+	wg.WorldConfig(w).BlockPotions = []string{"poison"}
+	raw, err := w.Spawn(registry.EntityTypeArrow, plugin.Location{World: w, Pos: plugin.Vec3{X: 5.5, Y: 70, Z: 5.5}}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fire := func(key string, shooter plugin.Entity) bool {
+		e := &plugin.ProjectileLaunchEvent{Projectile: tippedArrow{Arrow: raw.(plugin.Arrow), key: plugin.MinecraftKey(key), shooter: shooter}}
+		wg.Server.Events().Fire(e)
+		return e.Cancelled()
+	}
+	if !fire("poison", nil) {
+		t.Error("a poison arrow is not refused")
+	}
+	if fire("swiftness", nil) {
+		t.Error("a swiftness arrow is refused")
+	}
+	if !fire("poison", alice.Handle()) {
+		t.Error("a poison arrow shot by a player without the override is not refused")
+	}
+	alice.Op()
+	if fire("poison", alice.Handle()) {
+		t.Error("a player with worldguard.override.potions is refused")
 	}
 }
