@@ -33,6 +33,8 @@ func worldGuardCommands() *commandGroup {
 			run: wgStopProfile},
 		{aliases: []string{"flushstates", "clearstates"}, usage: "[player]", desc: "Flush the state manager",
 			max: 1, perm: "worldguard.flushstates", run: wgFlushStates},
+		{aliases: []string{"debug"}, usage: "<testbreak|testplace|testinteract|testdamage>",
+			desc: "Debugging commands", group: debugCommands()},
 		{aliases: []string{"running", "queue"}, desc: "List running tasks", max: 0, perm: "worldguard.running",
 			run: func(_ *WorldGuard, a *cmdArgs) error {
 				a.sender.SendMessage(chat.Info("There are currently no running tasks."))

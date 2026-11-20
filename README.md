@@ -150,6 +150,8 @@ Region ids may contain letters, digits and `_ , ' - + /`.
 | `/wg profile [minutes]` | records the server's CPU use for 1 to 10 minutes (default 5) into `plugins/worldguard/profile.pprof` | `worldguard.profile` |
 | `/wg stopprofile` | cancels a running profile | `worldguard.profile` |
 | `/wg flushstates [player]` (alias `clearstates`) | applies the region flags afresh to everyone, or one player | `worldguard.flushstates` |
+| `/wg debug testbreak [-t] [-s] <player>` | pretends the player breaks the block they look at and tells whether a listener blocked it, and at which priority; `-t` traces from that player's view rather than yours (needed from the console), `-s` writes the report to the console | `worldguard.debug.event` |
+| `/wg debug testplace`, `testinteract`, `testdamage` | the same for placing at, right-clicking the block, or hitting the entity looked at | `worldguard.debug.event` |
 | `/wg running` (alias `queue`) | lists running tasks | `worldguard.running` |
 
 `/worldguard` is the long form of `/wg`.
@@ -319,6 +321,8 @@ players the server knows, then with Mojang, as WorldGuard does.
 - `/wg profile` writes a Go CPU profile (`profile.pprof`, read with `go tool pprof`) of the
   whole server instead of a text report of Java threads; `-i` and `-t` change nothing.
 - `/wg report -p` and `/wg profile -p` do not paste to EngineHub's paste service.
+- `/wg debug` reports the listener priority at which an action was blocked rather than the
+  plugin, and `-s` writes the report to the console instead of pasting a stack trace.
 - Greeting and farewell titles always use the default fade times.
 - When another plugin, such as Essentials, already has `/god`, `/heal` or another general
   command, WorldGuard's is not registered.
