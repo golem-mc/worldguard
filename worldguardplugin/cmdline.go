@@ -295,8 +295,21 @@ func (c *wgCommand) options(wg *WorldGuard, a *cmdArgs, words []string) []string
 	return wg.playerNames()
 }
 
-// registerCommand registers c under each alias; a name another plugin
-// holds is skipped with a warning.
+// registered logs the outcome of registering /name. A name another plugin
+// holds still leaves /worldguard:name, which is only noted; any other error
+// means the command is missing and is a warning.
+func (wg *WorldGuard) registered(name string, err error) {
+	switch {
+	case err == nil:
+	case errors.Is(err, plugin.ErrNameTaken):
+		wg.Log.Info("/" + name + " belongs to another plugin; use /worldguard:" + name)
+	default:
+		wg.Log.Warn("Could not register /" + name + ": " + err.Error())
+	}
+}
+
+// registerCommand registers c under each alias; golem also registers
+// worldguard:alias when the bare name is taken.
 func (wg *WorldGuard) registerCommand(c *wgCommand) {
 	for _, name := range c.aliases {
 		run := c.runner(wg, name)
@@ -309,9 +322,7 @@ func (wg *WorldGuard) registerCommand(c *wgCommand) {
 				},
 			}},
 		})
-		if err != nil {
-			wg.Log.Warn("Could not register /" + name + ": " + err.Error())
-		}
+		wg.registered(name, err)
 	}
 }
 
@@ -395,9 +406,7 @@ func (wg *WorldGuard) registerGroup(g *commandGroup) {
 				},
 			}},
 		})
-		if err != nil {
-			wg.Log.Warn("Could not register /" + name + ": " + err.Error())
-		}
+		wg.registered(name, err)
 	}
 }
 
