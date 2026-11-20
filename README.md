@@ -50,6 +50,21 @@ As players walk, ride or teleport across region boundaries, these flags act on t
 Players with `worldguard.region.bypass.<world>` (operators, by default) are not stopped by
 `entry` and `exit` and keep their game mode.
 
+### What regions protect
+
+Inside a region, a player who is neither owner nor member cannot break or place blocks,
+open doors and containers, use buttons, levers, beds and anvils, place or break vehicles,
+paintings, item frames and armour stands, hurt animals, ride mounts, pick up or drop items
+in the region, or fight other players. Fire spread, TNT, creepers, endermen and pistons
+from outside the region cannot change it either. Monsters are not protected, nor is
+anything outside regions. A denied player is told `Hey! Sorry, but you can't
+break that block here.` (the `deny-message` flag).
+
+Setting a flag on a region changes this for everyone in it: `block-break allow` lets
+anyone break blocks, `pvp deny` stops fights even between members, `mob-spawning deny`
+keeps mobs from spawning, `send-chat deny` mutes the region, `blocked-cmds /home` blocks
+a command there.
+
 Flags work as in WorldGuard: see WorldGuard's
 [flag list](https://worldguard.enginehub.org/en/latest/regions/flags/) for every flag,
 its values and its default.
@@ -100,10 +115,20 @@ otherwise grant the nodes with a permission plugin. Besides the command nodes ab
 
 | Node | What it gives |
 |---|---|
-| `worldguard.region.bypass.<world>` | ignore region protection and the entry and exit flags in that world |
+| `worldguard.region.bypass.<world>` | build and use everything in every region of the world, and ignore the entry and exit flags there |
+| `worldguard.region.wand` | right-clicking a block with the region wand (leather) lists the regions there and whether you may build |
 | `worldguard.notify` | hear `notify-enter` and `notify-leave`, `/stopfire` and `/halt-activity` notices |
 | `worldguard.god.override-regions` | keep god mode in regions with `invincible` set to `deny` |
 | `worldguard.auto-invincible` | god mode on joining, when `auto-invincible` is `true` |
+| `worldguard.build.block.<block>.place`, `.remove`, `.interact` | with `build-permission-nodes.enable`, placing, breaking and using that block (`worldguard.build.block.place.<block>` works too) |
+| `worldguard.build.entity.<entity>.place`, `.remove`, `.interact`, `.damage` | the same for entities, with `build-permission-nodes.enable` |
+| `worldguard.build.item.<item>.use` | using that item, with `build-permission-nodes.enable` |
+| `worldguard.override.lighter` | lighting fires where `ignition.block-lighter` is on |
+| `worldguard.override.potions` | drinking and throwing the potions `gameplay.block-potions` names |
+| `worldguard.override.infinite-stack` | keeping stacks of negative size where `protection.remove-infinite-stacks` is on |
+
+Block, entity and item names in `worldguard.build.*` are vanilla's, without
+`minecraft:`: `worldguard.build.block.oak_door.interact`.
 
 ## Configuration
 
@@ -132,6 +157,22 @@ Worlds are named as on Bukkit: the overworld by `level-name` (`world`), then
 | `auto-no-drowning-group` | `false` | no drowning for players in the `wg-amphibious` group |
 | `regions.invincibility-removes-mobs` | `false` | a mob that hits an invincible player is removed |
 | `regions.titles-always-use-default-times` | `true` | greeting and farewell titles fade over the default times |
+| `build-permission-nodes.enable` | `false` | players need `worldguard.build.*` for what they build, break and use |
+| `regions.wand` | `minecraft:leather` | the item that shows the regions at a block |
+| `regions.high-frequency-flags` | `false` | checks the flags that need many queries: `fire-spread`, `lava-fire`, `water-flow`, `lava-flow` |
+| `regions.protect-against-liquid-flow` | `false` | water and lava from outside a region cannot flow into it |
+| `regions.explosion-flags-block-entity-damage` | `true` | where a blast may not break blocks, it does not hurt entities either |
+| `ignition.block-tnt`, `ignition.block-tnt-block-damage` | `false` | TNT does not explode, or explodes without breaking blocks |
+| `ignition.block-lighter` | `false` | flint and steel and fire charges do nothing |
+| `fire.disable-all-fire-spread`, `fire.disable-lava-fire-spread` | `false` | fire does not spread, or lava does not set fires |
+| `mobs.block-creeper-explosions`, `mobs.block-creeper-block-damage` | `false` | creepers do not explode, or do not break blocks; `mobs.*` has the same for withers, fireballs, the dragon and endermen |
+| `mobs.block-creature-spawn` | `[]` | mobs that never spawn: `[minecraft:zombie, minecraft:phantom]` |
+| `player-damage.disable-fall-damage` | `false` | players take no fall damage; `player-damage.*` covers lava, fire, drowning, void, mobs and more |
+| `weather.disable-weather`, `weather.always-raining` | `false` | the world never rains, or always does |
+| `dynamics.disable-leaf-decay` | `false` | leaves never decay; `dynamics.*` covers ice, snow, grass, vines, crops and copper |
+| `protection.item-durability` | `true` | tools wear out; `false` keeps them whole when breaking blocks |
+| `gameplay.block-potions` | `[]` | potion effects that are refused: `[speed, invisibility]` |
+| `use-particle-effects` | `true` | a puff of smoke where something was denied |
 
 Every option is described in WorldGuard's
 [configuration guide](https://worldguard.enginehub.org/en/latest/config/).
@@ -152,6 +193,8 @@ the players the server knows.
 - Greeting and farewell titles always use the default fade times.
 - When another plugin, such as Essentials, already has `/god`, `/heal` or another general
   command, WorldGuard's is not registered.
+- `chest-protection.enable` (protecting chests with `[Lock]` signs) is not available;
+  WorldGuard itself deprecated it in favour of regions.
 
 ## For plugin developers
 

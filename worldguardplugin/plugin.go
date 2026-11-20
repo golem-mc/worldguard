@@ -63,6 +63,7 @@ func (wg *WorldGuard) Enable(s plugin.Server) error {
 	wg.regions.initialize()
 	wg.sessions.register()
 	wg.registerCommands()
+	wg.registerProtection()
 	worldguard.Flags.SetInitialized(true)
 	plugin.Provide[worldguard.API](s, &api{wg}, 0)
 	current.Lock()
