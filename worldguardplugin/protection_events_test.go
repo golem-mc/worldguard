@@ -98,6 +98,15 @@ func TestPotionLeashLecternMoistureAndKnockback(t *testing.T) {
 	if !k.Cancelled() {
 		t.Error("wind-charge-burst deny did not stop the knockback")
 	}
+	// a player is judged the same way: no bypass, the owner included
+	for _, pl := range []plugin.Player{alice.Handle(), bob.Handle()} {
+		pl.Teleport(plugin.Location{World: w, Pos: plugin.Vec3{X: 3.5, Y: 64, Z: 3.5}}, plugin.TeleportPlugin)
+		pk := &plugin.EntityKnockbackEvent{Entity: pl, Pusher: wc, Knockback: plugin.Vec3{Y: 1}}
+		fire(pk)
+		if !pk.Cancelled() {
+			t.Errorf("wind-charge-burst deny did not stop the knockback of %s", pl.Name())
+		}
+	}
 	r.SetFlag(worldguard.FlagWindChargeBurst, nil)
 	far, err := w.Spawn(registry.EntityTypeCow, plugin.Location{World: w, Pos: plugin.Vec3{X: 50.5, Y: 64, Z: 50.5}}, nil)
 	if err != nil {
