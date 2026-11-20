@@ -72,8 +72,9 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
   `move`. `GameModeFlag`'s game mode change block is not ported: upstream never sets the
   value it compares against, so it never fires.
 - **Titles** always use the default fade times (golem-mc/golem#159).
-- **Commands** are registered one per name; a name another plugin holds is skipped with a
-  warning (golem-mc/golem#160). They do not set golem's command permission, so a player
+- **Commands** are registered one per name; when another plugin holds a name,
+  `worldguard:<name>` is still registered and an info line is logged; a name is skipped
+  with a warning only when registering fails completely (golem-mc/golem#160). They do not set golem's command permission, so a player
   without it gets WorldGuard's own "You don't have permission." instead of an unknown
   command, and `op-permissions` applies.
 - **`/wg profile`** uses Go's CPU profiler (`runtime/pprof`) for the whole process; Java's

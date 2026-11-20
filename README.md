@@ -324,7 +324,8 @@ players the server knows, then with Mojang, as WorldGuard does.
   plugin, and `-s` writes the report to the console instead of pasting a stack trace.
 - Greeting and farewell titles always use the default fade times.
 - When another plugin, such as Essentials, already has `/god`, `/heal` or another general
-  command, WorldGuard's is not registered.
+  command, that plugin keeps the plain name; WorldGuard's stays available as
+  `/worldguard:god`, `/worldguard:heal` and so on.
 - The blacklist cannot log to a database: `blacklist.logging.database` is ignored, with a
   warning when it is on.
 - `chest-protection.enable` (protecting chests with `[Lock]` signs) is not available;
