@@ -177,6 +177,67 @@ Worlds are named as on Bukkit: the overworld by `level-name` (`world`), then
 Every option is described in WorldGuard's
 [configuration guide](https://worldguard.enginehub.org/en/latest/config/).
 
+## Blacklist
+
+Each world's `worlds/<world>/blacklist.txt` lists blocks and items, and what happens when
+a player does something with them. A heading in brackets names one or more blocks or
+items (vanilla names, with or without `minecraft:`; old numeric block ids such as `35:14`
+work too), and the lines under it say what to do:
+
+```
+# Players may not mine diamond ore; tell them, log it and tell the staff
+[diamond_ore, deepslate_diamond_ore]
+on-break=deny,tell,log,notify
+comment=Diamond mining
+
+# No lava buckets, except for admins and moderators
+[lava_bucket]
+on-use=deny,tell
+ignore-groups=admins,mods
+message=&cLava buckets are not allowed here.
+```
+
+| Event | When |
+|---|---|
+| `on-break` | the block is broken |
+| `on-destroy-with` | a block is broken while holding the item |
+| `on-place` | the block is placed |
+| `on-use` | the item is used (buckets, flint and steel, spawn eggs, …) |
+| `on-interact` | the block is used (doors, chests, buttons, …) |
+| `on-drop` | the item is dropped |
+| `on-acquire` | the item is picked up or taken out of a container |
+| `on-equip` | the item is put on as armour |
+| `on-dispense` | a dispenser shoots the item |
+
+| Action | What it does |
+|---|---|
+| `deny` | stops it |
+| `allow` | lets it happen (for `blacklist.use-as-whitelist`) |
+| `tell` | tells the player it is not allowed |
+| `notify` | tells players with `worldguard.notify` |
+| `log` | logs it to the console or a file |
+| `kick`, `ban` | kicks or bans the player |
+
+| Option | What it does |
+|---|---|
+| `ignore-groups` | groups the entry does not apply to, comma-separated |
+| `ignore-perms` | permissions whose holders the entry does not apply to |
+| `message` | what `tell`, `kick` and `ban` say instead; `%s` is the block or item, `&` colour codes work |
+| `comment` | a note `log` and `notify` add |
+
+`tell`, `notify` and `log` stay quiet when the same player does the same thing again
+within three seconds. The blacklist's settings in `config.yml`:
+
+| Option | Default | What it does |
+|---|---|---|
+| `blacklist.use-as-whitelist` | `false` | everything listed is denied unless an `allow` action lets it |
+| `blacklist.logging.console.enable` | `true` | `log` writes to the server log |
+| `blacklist.logging.file.enable` | `false` | `log` writes to files |
+| `blacklist.logging.file.path` | `worldguard/logs/%Y-%m-%d.log` | the files, relative to the server folder: `%Y` year, `%m` month (from `00`), `%d` day, `%W` week, `%H` hour, `%i` minute, `%s` second, `%u` player, `%w` world |
+| `blacklist.logging.file.open-files` | `10` | how many log files stay open at once |
+
+`/wg reload` reads the blacklists again.
+
 ## Moving from Bukkit or Paper
 
 Copy `plugins/WorldGuard/config.yml` and the `plugins/WorldGuard/worlds/` folder to
@@ -193,6 +254,8 @@ the players the server knows.
 - Greeting and farewell titles always use the default fade times.
 - When another plugin, such as Essentials, already has `/god`, `/heal` or another general
   command, WorldGuard's is not registered.
+- The blacklist cannot log to a database: `blacklist.logging.database` is ignored, with a
+  warning when it is on.
 - `chest-protection.enable` (protecting chests with `[Lock]` signs) is not available;
   WorldGuard itself deprecated it in favour of regions.
 

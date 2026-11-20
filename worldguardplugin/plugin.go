@@ -64,6 +64,7 @@ func (wg *WorldGuard) Enable(s plugin.Server) error {
 	wg.sessions.register()
 	wg.registerCommands()
 	wg.registerProtection()
+	wg.registerBlacklist()
 	worldguard.Flags.SetInitialized(true)
 	plugin.Provide[worldguard.API](s, &api{wg}, 0)
 	current.Lock()
@@ -74,6 +75,7 @@ func (wg *WorldGuard) Enable(s plugin.Server) error {
 
 // Disable saves the regions. WorldGuard: WorldGuard.disable
 func (wg *WorldGuard) Disable() {
+	closeBlacklists()
 	if wg.sessions != nil {
 		wg.sessions.shutdown()
 	}
