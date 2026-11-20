@@ -239,6 +239,7 @@ Worlds are named as on Bukkit: the overworld by `level-name` (`world`), then
 | `dynamics.disable-leaf-decay` | `false` | leaves never decay; `dynamics.*` covers ice, snow, grass, vines, crops and copper |
 | `protection.item-durability` | `true` | tools wear out; `false` keeps them whole when breaking blocks |
 | `gameplay.block-potions` | `[]` | potion effects that are refused: `[speed, invisibility]` |
+| `simulation.sponge.enable`, `simulation.sponge.redstone` | `false` | sponges absorb water around them; with `redstone`, a powered sponge does not |
 | `use-particle-effects` | `true` | a puff of smoke where something was denied |
 
 Every option is described in WorldGuard's
