@@ -64,7 +64,7 @@ version=$(go list -m github.com/golem-mc/golem | cut -d' ' -f2)
 cat > dev/run/launcher.json <<EOF
 {
   "server": "$version",
-  "plugins": ["../.."],
+  "plugins": ["../../worldguardplugin"],
   "updateCheck": false
 }
 EOF
