@@ -1,0 +1,84 @@
+[tools]
+go = "1.27.4"
+golangci-lint = "2.15.0"
+gotestsum = "1.13.0"
+
+[tasks.build]
+description = "Build all packages"
+run = "go build ./..."
+
+[tasks.test]
+description = "Run all tests, rerunning the ones that fail"
+run = "tools/test.sh"
+
+[tasks."test:changed"]
+description = "Repeat the tests a branch adds or changes, to catch a flaky one before it merges"
+run = "tools/test-changed.sh"
+
+[tasks.lint]
+description = "Run golangci-lint"
+# Wait for golangci-lint's machine-wide lock when other worktrees are checking.
+run = "golangci-lint run --allow-serial-runners ./..."
+
+[tasks.fmt]
+description = "Format all Go files with gofmt"
+run = "gofmt -l -w ."
+
+[tasks."fmt:check"]
+description = "Fail if any Go file is not gofmt-formatted"
+run = '''
+unformatted=$(gofmt -l .)
+if [ -n "$unformatted" ]; then
+  echo "not gofmt-formatted (run 'mise run fmt'):" >&2
+  echo "$unformatted" >&2
+  exit 1
+fi
+'''
+
+[tasks.tidy]
+description = "Tidy go.mod and go.sum"
+run = "go mod tidy"
+
+[tasks."tidy:check"]
+description = "Fail if go.mod or go.sum is not tidy"
+run = "go mod tidy -diff"
+
+[tasks.fix]
+description = "Apply go fix's modernizations"
+run = "go fix ./..."
+
+[tasks."fix:check"]
+description = "Fail if go fix would change anything"
+# Overlapping fixes can fail with no diff; run each fixer alone to resolve it.
+run = "go fix -diff ./..."
+
+[tasks.check]
+description = "Everything a PR must pass: build, test, lint, format, fix and tidy checks"
+depends = ["build", "test", "lint", "fmt:check", "fix:check", "tidy:check", "dev:check"]
+
+[tasks."dev:config"]
+description = "Write dev/run/launcher.json (untracked), pinning the server to the golem version in go.mod"
+run = '''
+mkdir -p dev/run
+version=$(go list -m github.com/golem-mc/golem | cut -d' ' -f2)
+cat > dev/run/launcher.json <<EOF
+{
+  "server": "$version",
+  "plugins": ["../.."],
+  "updateCheck": false
+}
+EOF
+'''
+
+[tasks."dev:check"]
+description = "Prove the plugin links into a server through golem-launcher"
+depends = ["dev:config"]
+run = "go tool launcher -config dev/run/launcher.json check"
+
+[tasks.dev]
+description = "Run a golem server with this checkout of WorldGuard built in, in dev/run"
+depends = ["dev:config"]
+run = '''
+cd dev/run
+go tool launcher -config launcher.json
+'''

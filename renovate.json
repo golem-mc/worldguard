@@ -1,0 +1,88 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "postUpdateOptions": [
+    "gomodTidy",
+    "gomodUpdateImportPaths"
+  ],
+  "platformAutomerge": true,
+  "packageRules": [
+    {
+      "description": "Minor, patch and digest updates merge themselves once CI passes; majors wait for a person.",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin",
+        "pinDigest"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash"
+    },
+    {
+      "description": "Indirect Go modules are updated too, not only direct ones.",
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchDepTypes": [
+        "indirect"
+      ],
+      "enabled": true
+    },
+    {
+      "description": "The go directive in go.mod and the toolchain in mise.toml move together.",
+      "rangeStrategy": "bump",
+      "groupName": "Go toolchain",
+      "matchDepNames": [
+        "go"
+      ],
+      "matchManagers": [
+        "gomod",
+        "mise"
+      ]
+    },
+    {
+      "description": "mise ships almost daily; take it weekly once a release has settled.",
+      "matchDepNames": [
+        "jdx/mise"
+      ],
+      "schedule": [
+        "* 0-6 * * 1"
+      ],
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "golem-mc modules update together once a day.",
+      "matchPackageNames": [
+        "github.com/golem-mc/**"
+      ],
+      "groupName": "golem-mc modules",
+      "schedule": [
+        "* 0-5 * * *"
+      ]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "mise itself, pinned in the setup action (mise-action does not read it from mise.toml).",
+      "managerFilePatterns": [
+        "/(^|/)\\.github/actions/.+/action\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+version: (?<currentValue>\\S+)"
+      ],
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    }
+  ],
+  "devcontainer": {
+    "enabled": false
+  }
+}

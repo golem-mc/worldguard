@@ -1,0 +1,57 @@
+version: "2"
+
+run:
+  # Test code is not linted: the black-box test packages were more than half of
+  # a cold lint's CPU. The _test.go exclusions below stay for when it is again,
+  # and so does unused, which needs the tests to see what only they call.
+  tests: false
+
+linters:
+  # errcheck, govet, ineffassign, staticcheck and unused (off while tests are not linted).
+  default: standard
+  disable:
+    - unused
+  enable:
+    # A block copied from the nearest example instead of shared: one tracker,
+    # one metadata table, one helper.
+    - dupl
+    # A function grown past what a reader holds at once, usually one more
+    # pasted case.
+    - funlen
+  settings:
+    dupl:
+      # Tokens. At 200 main had 7 findings outside the tests (150: 21, 120:
+      # 52); 150 also flags each kind's trackedKind literal, the shape the
+      # tracker asks for.
+      threshold: 200
+    funlen:
+      # Lines of code, comments not counted, so a function's WHY comments
+      # never count against it. One metric is enough: statements is off.
+      lines: 300
+      statements: -1
+      ignore-comments: true
+  exclusions:
+    presets:
+      # Closing, flushing and printing are the cases where a dropped error is
+      # conventional in Go; everything else errcheck reports stays reported.
+      - std-error-handling
+    rules:
+      # The black-box tests spell each scenario out so a failure reads on its
+      # own; at 200 tokens main had 11 findings there.
+      - path: _test\.go$
+        linters: [dupl]
+
+      # The duplication and the oversized functions main already had. Entries
+      # may only be removed: the code they name is fixed, then the entry goes.
+      # A new one is never added; share the code or split the function.
+      # Each dupl entry names the twin's file in text and the block's first
+      # line in source, so it holds while lines move and nothing else matches.
+      - path: ^internal/server/tests/commands/server_arg_parse_test\.go$
+        linters: [funlen]
+        text: "^Function 'TestArgumentParseErrors' "
+      - path: ^internal/server/tests/network/server_login_test\.go$
+        linters: [funlen]
+        text: "^Function 'TestPlayerJoins' "
+
+# Formatting is checked separately by gofmt (`mise run fmt:check`), so this
+# file deliberately configures no formatters.

@@ -1,0 +1,21 @@
+# Local builds and runs
+/worldguard-server
+*.exe
+go.work
+go.work.sum
+
+# Reference checkout and local server runtime files
+WorldGuard/
+plugins/
+world/
+server.properties
+eula.txt
+ops.json
+whitelist.json
+banned-ips.json
+banned-players.json
+usercache.json
+help.yml
+
+# Development server (mise run dev)
+dev/run/

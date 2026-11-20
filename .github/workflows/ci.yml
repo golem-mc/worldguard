@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A new push to a PR branch makes the runs still going for it pointless.
+concurrency:
+  # Other events get a group of their own: GitHub keeps one pending run per group and
+  # cancels it when a newer one queues, so a shared group would drop main runs.
+  group: ${{ github.event_name == 'pull_request' && format('ci-{0}', github.ref) || format('ci-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          build-cache: true
+      - run: mise run test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          build-cache: true
+      - run: mise run build
+      - run: mise run dev:check
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          build-cache: true
+      - run: mise run lint
+
+  fix:
+    name: Fix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          build-cache: true
+      - run: mise run fix:check
+
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # gofmt only reads the files, so it needs neither modules nor builds.
+      - uses: ./.github/actions/setup
+        with:
+          modules: false
+      - run: mise run fmt:check
+
+  tidy:
+    name: Tidy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # go mod tidy resolves modules but compiles nothing.
+      - uses: ./.github/actions/setup
+      - run: mise run tidy:check

@@ -1,0 +1,63 @@
+name: Set up toolchain
+description: Installs the tools pinned in mise.toml and restores the Go and golangci-lint caches.
+
+# Only runs on main save caches. A pull request's caches are scoped to its own
+# branch and are never restored anywhere else, so saving them just fills the
+# repository's cache quota and evicts the ones main runs need.
+inputs:
+  modules:
+    description: Restore the Go module cache.
+    default: "true"
+  build-cache:
+    description: >
+      Restore this job's build cache (Go build cache plus golangci-lint's
+      analysis cache). Only jobs that compile or analyse code need it.
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - uses: jdx/mise-action@v5
+      with:
+        # renovate: datasource=github-releases depName=jdx/mise
+        version: 2026.11.7
+        cache: true
+
+    # Modules for a given go.sum never change, so a fixed key is saved once and
+    # stays correct; it is shared by every job.
+    - if: inputs.modules == 'true' && github.ref == 'refs/heads/main'
+      uses: actions/cache@v6
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-gomod-${{ hashFiles('go.sum') }}
+        restore-keys: ${{ runner.os }}-gomod-
+    - if: inputs.modules == 'true' && github.ref != 'refs/heads/main'
+      uses: actions/cache/restore@v6
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-gomod-${{ hashFiles('go.sum') }}
+        restore-keys: ${{ runner.os }}-gomod-
+
+    # Build output changes with every commit, so the key ends in the commit and
+    # each main run saves a fresh cache; restores pick the newest by prefix.
+    # The job name keeps lint's analysis cache apart from the build's.
+    - if: inputs.build-cache == 'true' && github.ref == 'refs/heads/main'
+      uses: actions/cache@v6
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/.cache/golangci-lint
+        key: ${{ runner.os }}-gobuild-${{ github.job }}-${{ hashFiles('go.sum', 'mise.toml') }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-gobuild-${{ github.job }}-${{ hashFiles('go.sum', 'mise.toml') }}-
+          ${{ runner.os }}-gobuild-${{ github.job }}-
+    - if: inputs.build-cache == 'true' && github.ref != 'refs/heads/main'
+      uses: actions/cache/restore@v6
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/.cache/golangci-lint
+        key: ${{ runner.os }}-gobuild-${{ github.job }}-${{ hashFiles('go.sum', 'mise.toml') }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-gobuild-${{ github.job }}-${{ hashFiles('go.sum', 'mise.toml') }}-
+          ${{ runner.os }}-gobuild-${{ github.job }}-
