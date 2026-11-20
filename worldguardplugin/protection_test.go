@@ -370,3 +370,37 @@ func TestBlockedArrowLaunch(t *testing.T) {
 		t.Error("a plain arrow is refused")
 	}
 }
+
+func TestHostKeysRefuseWrongHost(t *testing.T) {
+	srv, wg := start(t)
+	alice := srv.Join("Alice")
+	wg.Config.HostKeys = map[string]string{"alice": "play.example.com"}
+	p := &protection{wg: wg}
+	login := func(host string, allowFML bool) plugin.LoginResult {
+		wg.Config.HostKeysAllowFMLClients = allowFML
+		e := &plugin.PlayerLoginEvent{Player: alice.Handle(), Hostname: host}
+		p.onLogin(e)
+		return e.Result
+	}
+	for _, c := range []struct {
+		host string
+		fml  bool
+		want plugin.LoginResult
+	}{
+		{"play.example.com:25565", false, plugin.LoginAllowed},
+		{"PLAY.example.com", false, plugin.LoginAllowed},
+		{"other.example.com:25565", false, plugin.LoginOther},
+		{"play.example.com\x00FML\x00:25565", false, plugin.LoginOther},
+		{"play.example.com\x00FML\x00", true, plugin.LoginAllowed},
+	} {
+		if got := login(c.host, c.fml); got != c.want {
+			t.Errorf("host %q (forge allowed %v): result %v, want %v", c.host, c.fml, got, c.want)
+		}
+	}
+	bob := srv.Join("Bob")
+	e := &plugin.PlayerLoginEvent{Player: bob.Handle(), Hostname: "anything"}
+	p.onLogin(e)
+	if e.Result != plugin.LoginAllowed {
+		t.Errorf("a player without a host key was refused")
+	}
+}

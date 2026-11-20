@@ -100,8 +100,6 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
   have no known origin, so they are an unknown cause. (golem-mc/golem#164)
 - **Damage causes** are read from the vanilla damage type: `lava`, `cactus`,
   `out_of_world`, `in_wall` and so on; an explosion with no entity is a block explosion.
-- **Host keys** are not checked, since golem does not give plugins the handshake's host
-  name; a warning is logged when they are set.
 - **Not ported:** sign chest protection (`ChestProtectionListener`, deprecated upstream),
   CommandBook god mode interop (`WorldGuardCommandBookListener`, `WorldGuardServerListener`),
   the cancel debugging (`DebuggingListener`), and listeners for events golem does not
