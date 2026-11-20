@@ -2,7 +2,6 @@ package worldguardplugin
 
 import (
 	"fmt"
-	"reflect"
 	"slices"
 	"strings"
 
@@ -132,48 +131,12 @@ func testDamage(wg *WorldGuard, a *cmdArgs, target plugin.Player) error {
 	return nil
 }
 
-// cancelAttempt is a change of an event's cancelled state, seen after the
-// listeners of one priority ran. WorldGuard: CancelAttempt
-type cancelAttempt struct {
-	after    bool
-	priority plugin.Priority
-}
-
 var priorityNames = map[plugin.Priority]string{plugin.Lowest: "LOWEST", plugin.Low: "LOW",
 	plugin.Normal: "NORMAL", plugin.High: "HIGH", plugin.Highest: "HIGHEST", plugin.Monitor: "MONITOR"}
 
-// fireLogged fires e through every plugin's listeners and answers each
-// change of its cancelled state. golem does not say which listener made a
-// change, so an observer after each priority's listeners notes the state:
-// listeners registered later at a priority run after earlier ones.
-func (wg *WorldGuard) fireLogged(e cancellable) []cancelAttempt {
-	var cancels []cancelAttempt
-	last := false
-	var observers []plugin.Listener
-	for _, pri := range []plugin.Priority{plugin.Lowest, plugin.Low, plugin.Normal, plugin.High, plugin.Highest, plugin.Monitor} {
-		observe := func(ev plugin.Event) {
-			if ev != e {
-				return
-			}
-			if now := e.Cancelled(); now != last {
-				cancels = append(cancels, cancelAttempt{after: now, priority: pri})
-				last = now
-			}
-		}
-		observers = append(observers, wg.Server.Events().Register(reflect.TypeOf(e), observe, plugin.ListenOptions{Priority: pri}))
-	}
-	defer func() {
-		for _, o := range observers {
-			o.Unregister()
-		}
-	}()
-	wg.Server.Events().Fire(e)
-	return cancels
-}
-
 // cancelReport answers the report on an event's cancellations.
 // WorldGuard: CancelReport.toString
-func cancelReport(cancelled bool, cancels []cancelAttempt) string {
+func cancelReport(cancelled bool, cancels []plugin.ListenerChange) string {
 	if len(cancels) == 0 {
 		return "No plugins cancelled the event. Other causes for cancellation: " +
 			"(1) golem may be using a different event for the action " +
@@ -193,11 +156,11 @@ func cancelReport(cancelled bool, cancels []cancelAttempt) string {
 	for i, c := range slices.Backward(cancels) {
 
 		verdict := "ALLOWED"
-		if c.after {
+		if c.After {
 			verdict = "BLOCKED"
 		}
-		fmt.Fprintf(&b, "#%d %s by a listener at priority %s (the plugin is not known)\n",
-			len(cancels)-i, verdict, priorityNames[c.priority])
+		fmt.Fprintf(&b, "#%d %s by %s (priority %s)\n",
+			len(cancels)-i, verdict, c.Plugin, priorityNames[c.Priority])
 	}
 	return b.String()
 }
@@ -213,7 +176,7 @@ func (wg *WorldGuard) testEvent(a *cmdArgs, target plugin.Player, e cancellable)
 		}
 		target.SendMessage(chat.Error("(Please ignore any messages that may immediately follow.)"))
 	}
-	cancels := wg.fireLogged(e)
+	cancels := wg.Server.Events().FireTraced(e)
 	result := cancelReport(e.Cancelled(), cancels)
 	if a.has('s') {
 		a.sender.SendMessage(chat.Debug("The report was printed to console."))

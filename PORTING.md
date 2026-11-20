@@ -137,9 +137,8 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
 - **Armour** for the blacklist is any item equippable on the head, chest, legs or feet,
   which covers upstream's armour tags, skulls, carved pumpkins and elytra.
 - **`/wg debug`** (`debug.go`, upstream's `BukkitDebugHandler` and `CancelReport`) fires
-  golem's own events through `Events.Fire` with an observer registered last at each
-  priority, so it reports at which priority the cancelled state changed; golem cannot say
-  which plugin changed it (golem-mc/golem#172). `-s` logs the report instead of pasting it.
+  golem's own events through `Events.FireTraced`, which names the plugin and priority of
+  each listener that changed the cancelled state. `-s` logs the report instead of pasting it.
   `wgCommand.group` nests a command group under a sub-command for it.
 
 ## Tests

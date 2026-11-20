@@ -20,7 +20,7 @@ func TestDebugSimulatesEvents(t *testing.T) {
 	out := srv.Console("wg debug testbreak -t Bob")
 	contains(t, out, "Testing BLOCK BREAK at minecraft:")
 	contains(t, out, "Was the action blocked? YES")
-	contains(t, out, "#1 BLOCKED by a listener at priority")
+	contains(t, out, "#1 BLOCKED by worldguard (priority NORMAL)")
 	contains(t, bob.Messages(1), "(Please ignore any messages that may immediately follow.)")
 	contains(t, srv.Console("wg debug testplace -t Bob"), "Was the action blocked? YES")
 
