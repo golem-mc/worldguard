@@ -2,6 +2,7 @@ package worldguardplugin
 
 import (
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 
@@ -18,16 +19,16 @@ type migration interface {
 // migrate saves and unloads the loaded regions, runs m over every world
 // with a regions.yml, and loads the regions again. WorldGuard:
 // RegionContainer.migrate, AbstractMigration.migrate
-func (c *regionContainer) migrate(m migration) {
-	c.wg.Log.Info("Unloading and saving region data that is currently loaded...")
+func (c *regionContainer) migrate(m migration, log *slog.Logger) {
+	log.Info("Unloading and saving region data that is currently loaded...")
 	c.unloadAll()
 	defer func() {
-		c.wg.Log.Info("Loading region data for loaded worlds...")
+		log.Info("Loading region data for loaded worlds...")
 		c.loadWorlds()
 	}()
 	for _, store := range c.driver.All() {
 		if err := m.migrate(store); err != nil {
-			c.wg.Log.Warn(fmt.Sprintf("Migration of one world (%s) failed with an error: %v", store.Name(), err))
+			log.Warn(fmt.Sprintf("Migration of one world (%s) failed with an error: %v", store.Name(), err))
 		}
 	}
 	m.post()
@@ -40,7 +41,7 @@ func (c *regionContainer) autoMigrate() {
 	if !cfg.MigrateRegionsToUUID {
 		return
 	}
-	c.migrate(&uuidMigration{wg: c.wg, keepUnresolved: cfg.KeepUnresolvedNames})
+	c.migrate(&uuidMigration{wg: c.wg, log: c.wg.Log, keepUnresolved: cfg.KeepUnresolvedNames}, c.wg.Log)
 	c.wg.Log.Info("Regions saved after UUID migration! This won't happen again unless " +
 		"you change the relevant configuration option in WorldGuard's config.")
 	cfg.DisableUUIDMigration()
@@ -50,6 +51,7 @@ func (c *regionContainer) autoMigrate() {
 // the server knows. WorldGuard: UUIDMigration
 type uuidMigration struct {
 	wg             *WorldGuard
+	log            *slog.Logger
 	keepUnresolved bool
 	unresolved     bool
 }
@@ -67,14 +69,14 @@ func (u *uuidMigration) migrate(store *storage.File) error {
 	if len(names) == 0 {
 		return nil
 	}
-	u.wg.Log.Info(fmt.Sprintf("Migrating regions in '%s' to convert names -> UUIDs...", store.Name()))
+	u.log.Info(fmt.Sprintf("Migrating regions in '%s' to convert names -> UUIDs...", store.Name()))
 	slices.Sort(names)
-	u.wg.Log.Info(fmt.Sprintf("Resolving %d name(s) into UUIDs... this may take a while.", len(slices.Compact(names))))
+	u.log.Info(fmt.Sprintf("Resolving %d name(s) into UUIDs... this may take a while.", len(slices.Compact(names))))
 	for _, r := range regions {
 		u.convert(r.Owners())
 		u.convert(r.Members())
 	}
-	u.wg.Log.Info("UUIDs resolved... now migrating all regions to UUIDs where possible...")
+	u.log.Info("UUIDs resolved... now migrating all regions to UUIDs where possible...")
 	if err := store.SaveAll(regions); err != nil {
 		return fmt.Errorf("failed to save region data after migration of the world '%s': %w", store.Name(), err)
 	}
@@ -100,21 +102,22 @@ func (u *uuidMigration) post() {
 		return
 	}
 	if u.keepUnresolved {
-		u.wg.Log.Warn("Some member and owner names do not seem to exist or own Minecraft so they " +
+		u.log.Warn("Some member and owner names do not seem to exist or own Minecraft so they " +
 			"could not be converted into UUIDs. They have been left as names, but the conversion can " +
 			"be re-run with 'keep-names-that-lack-uuids' set to false in the configuration in " +
 			"order to remove these names. Leaving the names means that someone can register with one of " +
 			"these names in the future and become that player.")
 		return
 	}
-	u.wg.Log.Warn("Some member and owner names do not seem to exist or own Minecraft so they " +
+	u.log.Warn("Some member and owner names do not seem to exist or own Minecraft so they " +
 		"could not be converted into UUIDs. These names have been removed.")
 }
 
 // heightMigration stretches regions that span the old 0 to 255 world
 // height to the world's height. WorldGuard: WorldHeightMigration
 type heightMigration struct {
-	wg *WorldGuard
+	wg  *WorldGuard
+	log *slog.Logger
 	// world limits the migration to one world; empty for all.
 	world   string
 	changed int
@@ -124,7 +127,7 @@ func (h *heightMigration) migrate(store *storage.File) error {
 	if h.world != "" && !strings.EqualFold(store.Name(), h.world) {
 		return nil
 	}
-	h.wg.Log.Info(fmt.Sprintf("Migrating regions in '%s' to new height limits...", store.Name()))
+	h.log.Info(fmt.Sprintf("Migrating regions in '%s' to new height limits...", store.Name()))
 	regions, err := store.LoadAll(worldguard.Flags)
 	if err != nil {
 		return fmt.Errorf("failed to load region data for the world '%s': %w", store.Name(), err)
@@ -149,5 +152,5 @@ func (h *heightMigration) migrate(store *storage.File) error {
 }
 
 func (h *heightMigration) post() {
-	h.wg.Log.Info(fmt.Sprintf("A total of %d top-to-bottom regions were vertically expanded.", h.changed))
+	h.log.Info(fmt.Sprintf("A total of %d top-to-bottom regions were vertically expanded.", h.changed))
 }

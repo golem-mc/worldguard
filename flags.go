@@ -173,6 +173,10 @@ var builtin []string
 // IsBuiltinFlag reports whether name is one of WorldGuard's own flags.
 func IsBuiltinFlag(name string) bool { return slices.Contains(builtin, strings.ToLower(name)) }
 
+// BuiltinFlagNames answers WorldGuard's own flag names in registration
+// order. WorldGuard: Flags.INBUILT_FLAGS
+func BuiltinFlagNames() []string { return slices.Clone(builtin) }
+
 func reg[F Flag](f F) F {
 	if err := Flags.add(f); err != nil {
 		panic(err)

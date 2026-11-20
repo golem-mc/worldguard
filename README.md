@@ -16,6 +16,21 @@ the line above installs it too. For permission groups in region membership (`g:a
 also install a permission plugin such as [LuckPerms](https://github.com/golem-mc/perms)
 with [Vault](https://github.com/golem-mc/vault).
 
+## Getting started
+
+1. Select an area with WorldEdit: `//wand` gives you the wand (a wooden axe); left-click
+   one corner and right-click the opposite one. For a polygon, `//sel poly` first, then
+   right-click each further corner.
+2. Make the selection a region: `/rg define shop`. A player without
+   `worldguard.region.define` can claim one instead with `/rg claim shop`, which makes
+   them its owner, within the configured size and count limits.
+3. Add people: `/rg addmember shop Alex`, or a permission group with
+   `/rg addowner shop g:admins`.
+4. Set flags: `/rg flag shop greeting Welcome to the shop!`, `/rg flag shop pvp deny`,
+   or for non-members only `/rg flag shop pvp -g nonmembers deny`. `/rg flags shop`
+   shows every flag with clickable values.
+5. Check the result with `/rg info shop`, or `/rg info` where you stand.
+
 ## Regions
 
 A region is an area of a world with an id, a priority, owners, members and flags:
@@ -71,6 +86,37 @@ its values and its default.
 
 ## Commands
 
+### /region
+
+`/region` has the aliases `/regions` and `/rg`. Most commands take `-w <world>` to
+work on another world than yours (needed from the console); `<id>` is a region id.
+
+| Usage | What it does | Permission | Aliases |
+|---|---|---|---|
+| `/rg define [-n] [-g] <id> [owners...]` | Makes a region of your selection, owned by the players and `g:groups` listed; `-g` makes a global region with no area, `-n` stores owners by name | `worldguard.region.define` | `def`, `d`, `create` |
+| `/rg redefine [-g] <id>` | Gives a region the area of your selection, keeping everything else | `worldguard.region.redefine.*` | `update`, `move` |
+| `/rg claim <id>` | Makes a region of your selection owned by you, if it is small enough and overlaps only regions you own | `worldguard.region.claim` | |
+| `/rg select [id]` | Makes the region (or the one you stand in) your WorldEdit selection | `worldguard.region.select.*` | `sel`, `s` |
+| `/rg info [-u] [-s] [id]` | Shows a region's type, priority, flags, parents, owners, members and bounds; `-u` shows UUIDs instead of names, `-s` also selects it | `worldguard.region.info.*` | `i` |
+| `/rg list [-p owner [-n]] [-s] [-i filter] [page]` | Lists the regions, or those `owner` owns or is a member of, those overlapping your selection (`-s`), those whose id contains `filter` | `worldguard.region.list`, `worldguard.region.list.own` | |
+| `/rg flag [-g group] [-e] [-h page] <id> <flag> [value]` | Sets a flag, or removes it without a value; `-g` sets who it applies to (`members`, `owners`, `nonmembers`, `nonowners`, `everyone`), `-e` sets an empty value | `worldguard.region.flag.regions.*`, `worldguard.region.flag.flags.<flag>.*` | `f` |
+| `/rg flags [-p page] [id]` | Shows every flag of a region with clickable values | `worldguard.region.info.*` | |
+| `/rg setpriority <id> <priority>` | Sets the priority; the higher one wins where regions overlap | `worldguard.region.setpriority.*` | `priority`, `pri` |
+| `/rg setparent <id> [parent]` | Sets or, without `parent`, clears the parent | `worldguard.region.setparent.*` | `parent`, `par` |
+| `/rg remove [-f] [-u] <id>` | Removes a region; one with children needs `-f` (remove them too) or `-u` (keep them without a parent) | `worldguard.region.remove.*` | `delete`, `del`, `rem` |
+| `/rg addmember [-n] <id> <players...>` | Adds members: player names, UUIDs or `g:group` | `worldguard.region.addmember.*` | `addmem`, `am` |
+| `/rg addowner [-n] <id> <players...>` | Adds owners | `worldguard.region.addowner.*` | `ao` |
+| `/rg removemember [-a] <id> [players...]` | Removes members, or all with `-a` | `worldguard.region.removemember.*` | `remmember`, `removemem`, `remmem`, `rm` |
+| `/rg removeowner [-a] <id> [players...]` | Removes owners, or all with `-a` | `worldguard.region.removeowner.*` | `remowner`, `ro` |
+| `/rg teleport [-s] [-c] <id>` | Teleports you to the region's `teleport` flag, its `spawn` flag with `-s`, or its center with `-c` (spectator mode only) | `worldguard.region.teleport.*`, `worldguard.region.teleportcenter.*` | `tp` |
+| `/rg toggle-bypass [on\|off]` | Turns your region bypass off or on again | `worldguard.region.toggle-bypass` | `bypass` |
+| `/rg load` | Reloads the regions of your world (or `-w`), or of every world from the console | `worldguard.region.load` | `reload` |
+| `/rg save` | Saves the regions now | `worldguard.region.save` | `write` |
+| `/rg migrateuuid` | Turns owners and members stored by name into UUIDs | `worldguard.region.migrateuuid` | |
+| `/rg migrateheights -y [-w world]` | Stretches regions spanning the old 0 to 255 height to the world's full height | `worldguard.region.migrateheights` | |
+
+Region ids may contain letters, digits and `_ , ' - + /`.
+
 ### Player commands
 
 | Command | What it does | Permission |
@@ -111,7 +157,19 @@ its values and its default.
 ## Permissions
 
 Operators have every WorldGuard permission while `op-permissions` is `true` (the default);
-otherwise grant the nodes with a permission plugin. Besides the command nodes above:
+otherwise grant the nodes with a permission plugin.
+
+Region permissions ending in `.*` above are per region, with three forms that a
+permission plugin's wildcards make useful:
+
+- `worldguard.region.<command>.own.<id>` for a region's owners,
+- `worldguard.region.<command>.member.<id>` for its members (and owners),
+- `worldguard.region.<command>.<id>` for anyone.
+
+For example `worldguard.region.flag.regions.own.*` lets owners set flags on their own
+regions, and `worldguard.region.flag.flags.pvp.*` lets them set the `pvp` flag;
+`worldguard.region.flag.flags.<flag>.<value>.*` limits a flag to one value (`unset` for
+removing it). Besides the command nodes above:
 
 | Node | What it gives |
 |---|---|
@@ -126,6 +184,9 @@ otherwise grant the nodes with a permission plugin. Besides the command nodes ab
 | `worldguard.override.lighter` | lighting fires where `ignition.block-lighter` is on |
 | `worldguard.override.potions` | drinking and throwing the potions `gameplay.block-potions` names |
 | `worldguard.override.infinite-stack` | keeping stacks of negative size where `protection.remove-infinite-stacks` is on |
+| `worldguard.region.unlimited` | claim regions of any size and number |
+| `worldguard.region.addowner.unclaimed.<id>` | add the first owner to a region nobody owns |
+| `worldguard.region.locationoverride.*` | set `teleport` and `spawn` outside the region when `regions.location-flags-only-inside-regions` is on |
 
 Block, entity and item names in `worldguard.build.*` are vanilla's, without
 `minecraft:`: `worldguard.build.block.oak_door.interact`.
@@ -147,7 +208,11 @@ Worlds are named as on Bukkit: the overworld by `level-name` (`world`), then
 | Option | Default | What it does |
 |---|---|---|
 | `regions.enable` | `true` | turns regions on in a world |
-| `regions.max-region-count-per-player.default` | `7` | how many regions a player may claim; add a line per group |
+| `regions.max-claim-volume` | `30000` | the largest region `/rg claim` makes, in blocks |
+| `regions.max-region-count-per-player.default` | `7` | how many regions a player may own for `/rg claim`; add a line per group |
+| `regions.claim-only-inside-existing-regions` | `false` | `/rg claim` works only inside regions the player owns |
+| `regions.set-parent-on-claim` | `''` | the parent a claimed region gets |
+| `regions.location-flags-only-inside-regions` | `false` | `teleport` and `spawn` must lie in the region |
 | `regions.disable-bypass-by-default` | `false` | operators must turn region bypass on |
 | `op-permissions` | `true` | operators have every WorldGuard permission |
 | `use-player-move-event` | `true` | apply the region flags as players walk and ride; `false` leaves only teleports |
@@ -182,11 +247,14 @@ Every option is described in WorldGuard's
 Copy `plugins/WorldGuard/config.yml` and the `plugins/WorldGuard/worlds/` folder to
 `plugins/worldguard/`. The regions load as they are, flags of other plugins included;
 owners and members still stored by name are turned into UUIDs on the first start, from
-the players the server knows.
+the players the server knows. Commands that take player names look them up among the
+players the server knows, then with Mojang, as WorldGuard does.
 
 ## Differences from WorldGuard
 
-- Region data is kept in YAML files only; the MySQL storage is not available.
+- Region data is kept in YAML files only; the MySQL storage is not available, and
+  `/rg migratedb` says so.
+- `/rg` completes sub-commands, region ids, flag names and flag values with Tab.
 - `/wg profile` writes a Go CPU profile (`profile.pprof`, read with `go tool pprof`) of the
   whole server instead of a text report of Java threads; `-i` and `-t` change nothing.
 - `/wg report -p` and `/wg profile -p` do not paste to EngineHub's paste service.

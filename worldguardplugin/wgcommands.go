@@ -321,4 +321,5 @@ func (wg *WorldGuard) registerCommands() {
 		wg.registerCommand(c)
 	}
 	wg.registerGroup(worldGuardCommands())
+	wg.registerGroup(regionCommands())
 }

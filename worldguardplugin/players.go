@@ -109,9 +109,26 @@ func (wg *WorldGuard) HasPermission(s plugin.CommandSender, node string) bool {
 		if p.OpLevel() > 0 && wg.WorldConfig(p.World()).OpPermissions {
 			return true
 		}
-		return p.HasPermission(node)
+		return hasWildcard(p, node)
 	}
 	return s.OpLevel() > 0 || s.HasPermission(node)
+}
+
+// hasWildcard decides node, honouring a.b.* and * set by the permission
+// plugin when node itself is not set. WorldEdit: DinnerPermsResolver
+func hasWildcard(s plugin.CommandSender, node string) bool {
+	if s.PermissionSet(node) {
+		return s.HasPermission(node)
+	}
+	for dot := strings.LastIndexByte(node, '.'); dot >= 0; dot = strings.LastIndexByte(node[:dot], '.') {
+		if w := node[:dot+1] + "*"; s.PermissionSet(w) {
+			return s.HasPermission(w)
+		}
+	}
+	if s.PermissionSet("*") {
+		return s.HasPermission("*")
+	}
+	return s.HasPermission(node)
 }
 
 // HasBypass reports whether p ignores region protection in w: they hold

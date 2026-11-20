@@ -10,12 +10,16 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
 |---|---|---|
 | `/` (package `worldguard`) | The API: flags and the flag registry, regions, domains, the flag value calculator, region managers, queries and the `API` service | `protection/`, `domains/`, `protection/flags/`, `RegionQuery` |
 | `worldguardplugin/` | The `worldguard` plugin: enabling, the region container, sessions, players, migrations | `WorldGuardPlugin`, `BukkitWorldGuardPlatform`, `RegionContainer*`, `session/` |
+| `worldguardplugin/commands_*.go`, `cmdbase.go` | `/region` and its sub-commands | `RegionCommands`, `MemberCommands`, `RegionCommandsBase`, `commands/task/` |
+| `worldguardplugin/printout.go`, `lister.go`, `flaghelper.go` | `/rg info`, `/rg list`, `/rg flags` output | `RegionPrintoutBuilder`, `RegionLister`, `FlagHelperBox`, WorldEdit's `MessageBox`, `PaginationBox` |
+| `worldguardplugin/permmodel.go` | Region command permissions | `RegionPermissionModel` |
+| `worldguardplugin/profiles.go` | Player names and UUIDs typed in commands | `DomainInputResolver`, squirrelid's profile services |
 | `internal/config/` | `config.yml` and `worlds/<world>/config.yml`, and the default files | `ConfigurationManager`, `YamlWorldConfiguration`, `BukkitWorldConfiguration`, `resources/defaults` |
 | `internal/storage/` | `worlds/<world>/regions.yml` | `DirectoryYamlDriver`, `YamlRegionFile` |
 | `internal/yamlfile/` | YAML files with dotted paths and defaults written back | WorldEdit's `YAMLProcessor` |
 | `worldguardplugin/sessions.go`, `handlers.go` | Sessions and their flag handlers | `session/Session`, `session/handler/*` |
 | `worldguardplugin/movement.go`, `invincibility.go` | Movement, teleport, respawn and join listeners; invincibility and player modes | `PlayerMoveListener`, `WorldGuardPlayerListener` (teleport, respawn, join), `InvincibilityListener`, `PlayerModesListener` |
-| `worldguardplugin/cmdline.go`, `matcher.go` | The sk89q command style (flags, usage errors) and player and world matching | `CommandsManager`, `BukkitStringMatcher` |
+| `worldguardplugin/cmdline.go`, `matcher.go` | The sk89q command style (flags, quoted words, usage errors, completion) and player and world matching | `CommandsManager`, `BukkitStringMatcher` |
 | `worldguardplugin/general.go`, `toggles.go`, `wgcommands.go` | `/god` and the other general commands, the toggles, `/wg` | `GeneralCommands`, `ToggleCommands`, `WorldGuardCommands` |
 | `internal/chat/` | Legacy `§` text and WorldEdit's message colours | `CommandUtils`, `Actor.print*` |
 | `event/` | WorldGuard's own events (place, break and use blocks; spawn, destroy, use and damage entities; use items; disallowed PvP) and their `Cause` | `bukkit/event/`, `bukkit/cause/Cause` |
@@ -103,6 +107,28 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
   knockback (golem-mc/golem#166); redstone sponges and tipped arrows need golem-mc/golem#167.
 - **Debouncing** keeps upstream's windows (10 seconds for mobs on blocks and pickups, 30
   for hopper moves), with a plain map instead of Guava's cache.
+- **Commands** keep sk89q's rules: flags anywhere among the arguments, `-w world` value
+  flags, quoted words joined, "Too few arguments." with the usage line, `/rg` alone
+  answering `/rg <sub|commands>` (in declaration order; a hash set's upstream). Owners given
+  to `/rg define` are the arguments after the id; upstream slices the raw line, so
+  `-w world` in front of the id shifts its owners.
+- **Async tasks** (`AsyncCommandBuilder`) run on a goroutine and report on the tick
+  goroutine, because golem's handles may only be used there; the "(Please wait...)"
+  message comes after one second. Printouts (`/rg info`, `/rg flags`) are built on the
+  tick goroutine.
+- **Names** typed in commands resolve among the online and cached players first
+  (`OfflinePlayerNamed`), then with Mojang's bulk lookup, as upstream's
+  `CombinedProfileService(BukkitPlayerService, HttpRepositoryService)`. Upstream's
+  `profiles.sqlite` cache is not ported: last known names come from the server's user
+  cache.
+- **Permissions** resolve `a.b.*` and `*` set by the permission plugin when the node
+  itself is not set, as WorldEdit's `DinnerPermsResolver` (and LuckPerms through Vault) do.
+- **Spawn protection**: golem does not expose the radius, so no region is reported to
+  overlap it (golem-mc/worldguard#13).
+- **Tab completion** of `/rg` (sub-commands, region ids, flag names and values, `-w`
+  worlds) is the port's; upstream completes only player names.
+- **`/rg migratedb`** knows the `yaml` and `mysql` drivers and reports MySQL as
+  unsupported, which is what upstream answers for a driver it lacks.
 
 ## Tests
 
@@ -112,5 +138,7 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
   `regions.yml` marshalling.
 - `internal/storage` loads a `regions.yml` in upstream's format and saves it back.
 - `worldguardplugin` runs the plugin on a golem test server (`plugintest`): breaking,
-  placing, PvP, chat and command flags, the wand, build permission nodes and TNT.
+  placing, PvP, chat and command flags, the wand, build permission nodes, TNT and the
+  `/rg` commands, whose tests answer Mojang lookups with a local HTTP server that knows
+  no one.
 - `commandfilter_test.go` is upstream's `CommandFilterTest`, translated.
