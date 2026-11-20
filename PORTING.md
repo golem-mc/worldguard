@@ -23,6 +23,8 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
 | `worldguardplugin/regionprotection.go`, `buildperms.go` | Judges WorldGuard's events against regions and build permission nodes; the flags blocks and mobs obey | `RegionProtectionListener`, `BuildPermissionListener`, `RegionFlagsListener` |
 | `worldguardplugin/blockrules.go`, `entityrules.go`, `playerrules.go`, `worldrules.go`, `commandfilter.go` | The world settings and the flags read on golem's own events | `WorldGuardBlockListener`, `WorldGuardEntityListener`, `WorldGuardHangingListener`, `WorldGuardPlayerListener` (chat, commands, wand, de-op), `CommandFilter`, `WorldGuardWeatherListener`, `WorldGuardWorldListener`, `WorldRulesListener`, `BlockedPotionsListener` |
 | `worldguardplugin/materials.go`, `materials_table.go`, `entities.go` | Which blocks, items and entities count as what | `bukkit/util/Materials`, `Entities`, `Blocks` |
+| `internal/blacklist/` | `blacklist.txt`: parsing, entries, actions, console and file loggers | `blacklist/` |
+| `worldguardplugin/blacklist.go` | Loads each world's blacklist and checks WorldGuard's events and golem's inventory events against it | `BlacklistListener`, `BukkitWorldConfiguration` (blacklist loading) |
 | `cmd/server/` | A server with WorldGuard and WorldEdit built in | — |
 
 ## Decisions
@@ -103,6 +105,17 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
   knockback (golem-mc/golem#166); redstone sponges and tipped arrows need golem-mc/golem#167.
 - **Debouncing** keeps upstream's windows (10 seconds for mobs on blocks and pickups, 30
   for hopper moves), with a plain map instead of Guava's cache.
+
+- **Blacklist targets** are vanilla ids; an item with a block of the same name is that
+  block, as Bukkit's `Material` is. Names are translatable, and where upstream prints
+  them as plain text (logs, kicks, `message`'s `%s`) the translation key shows, as on
+  Paper. Headings also take old numeric block ids, through WorldEdit's legacy block
+  table (WorldEdit does not export its legacy item table, so numeric ids of items that
+  are not blocks are refused). The database logger (`DatabaseHandler`) is not ported; a
+  warning says so when it is on. The file logger keeps upstream's month from `00`.
+  Dispensers equipping armour are not checked against `on-equip` (golem-mc/golem#170).
+- **Armour** for the blacklist is any item equippable on the head, chest, legs or feet,
+  which covers upstream's armour tags, skulls, carved pumpkins and elytra.
 
 ## Tests
 
