@@ -29,9 +29,81 @@ A region is an area of a world with an id, a priority, owners, members and flags
 - **owners** and **members** are players or permission groups; by default only they
   may build in the region.
 
+### Flags players notice
+
+As players walk, ride or teleport across region boundaries, these flags act on them:
+
+| Flag | What the player sees |
+|---|---|
+| `greeting`, `farewell` | a chat message on entering or leaving the region (`&` colour codes, `\n` for a new line, `%name%`, `%world%`, `%online%`, `%health%`, `%id%`) |
+| `greeting-title`, `farewell-title` | the same as a title; text after `\n` is the subtitle |
+| `entry`, `exit` | `deny` stops players from walking or teleporting in or out, with `entry-deny-message` or `exit-deny-message`; `exit-via-teleport` and `exit-override` loosen `exit` |
+| `enderpearl`, `chorus-fruit-teleport` | `deny` stops these teleports into or out of the region |
+| `notify-enter`, `notify-leave` | players with `worldguard.notify` are told who entered or left |
+| `heal-amount`, `heal-delay`, `heal-min-health`, `heal-max-health` | heal (or, with a negative amount, hurt) players every `heal-delay` seconds |
+| `feed-amount`, `feed-delay`, `feed-min-hunger`, `feed-max-hunger` | the same for hunger |
+| `game-mode` | players switch to this game mode inside, and back on leaving |
+| `time-lock`, `weather-lock` | players see this time (`6000`, or `+1000` relative to the world) or weather (`clear`, `rain`, `thunder_storm`) inside |
+| `invincible` | `allow` makes players take no damage; `deny` overrides `/god` |
+| `spawn` | players who die inside respawn here |
+
+Players with `worldguard.region.bypass.<world>` (operators, by default) are not stopped by
+`entry` and `exit` and keep their game mode.
+
 Flags work as in WorldGuard: see WorldGuard's
 [flag list](https://worldguard.enginehub.org/en/latest/regions/flags/) for every flag,
 its values and its default.
+
+## Commands
+
+### Player commands
+
+| Command | What it does | Permission |
+|---|---|---|
+| `/god [-s] [player]` | makes you, or the players named, take no damage | `worldguard.god`, `worldguard.god.other` |
+| `/ungod [-s] [player]` | ends god mode | `worldguard.god`, `worldguard.god.other` |
+| `/heal [-s] [player]` | restores health and hunger | `worldguard.heal`, `worldguard.heal.other` |
+| `/slay [-s] [player]` | kills you, or the players named | `worldguard.slay`, `worldguard.slay.other` |
+| `/locate [player]` | points your compass at a player, or back at spawn | `worldguard.locate` |
+| `/stack` (alias `/;`) | merges the partial stacks in your inventory | `worldguard.stack` |
+
+`player` is a name or its start, `@name` for an exact name, `*part` for names containing
+`part`, `*` for everyone, `#world` for your world or `#near` for players within 30 blocks.
+`-s` keeps the targets from being told.
+
+### Toggles
+
+| Command | What it does | Permission |
+|---|---|---|
+| `/stopfire [world]` | stops all fire spread in your world or the one named, until a restart or reload | `worldguard.fire-toggle.stop` |
+| `/allowfire [world]` | lets fire spread again | `worldguard.fire-toggle.stop` |
+| `/halt-activity [-c] [-i] [-s] [confirm]` (aliases `/stoplag`, `/haltactivity`) | removes items, TNT, falling blocks and untamed mobs from every loaded world and keeps them out; `-c` ends it, `-i` tells whether it is on, `-s` stays quiet | `worldguard.halt-activity` |
+
+### /wg
+
+| Command | What it does | Permission |
+|---|---|---|
+| `/wg version` | shows the version | none |
+| `/wg reload` | reads the configuration and every world's regions again | `worldguard.reload` |
+| `/wg report` | writes `plugins/worldguard/report.txt` about the server, the configuration and your regions | `worldguard.report` |
+| `/wg profile [minutes]` | records the server's CPU use for 1 to 10 minutes (default 5) into `plugins/worldguard/profile.pprof` | `worldguard.profile` |
+| `/wg stopprofile` | cancels a running profile | `worldguard.profile` |
+| `/wg flushstates [player]` (alias `clearstates`) | applies the region flags afresh to everyone, or one player | `worldguard.flushstates` |
+| `/wg running` (alias `queue`) | lists running tasks | `worldguard.running` |
+
+`/worldguard` is the long form of `/wg`.
+
+## Permissions
+
+Operators have every WorldGuard permission while `op-permissions` is `true` (the default);
+otherwise grant the nodes with a permission plugin. Besides the command nodes above:
+
+| Node | What it gives |
+|---|---|
+| `worldguard.region.bypass.<world>` | ignore region protection and the entry and exit flags in that world |
+| `worldguard.notify` | hear `notify-enter` and `notify-leave`, `/stopfire` and `/halt-activity` notices |
+| `worldguard.god.override-regions` | keep god mode in regions with `invincible` set to `deny` |
+| `worldguard.auto-invincible` | god mode on joining, when `auto-invincible` is `true` |
 
 ## Configuration
 
@@ -53,6 +125,13 @@ Worlds are named as on Bukkit: the overworld by `level-name` (`world`), then
 | `regions.max-region-count-per-player.default` | `7` | how many regions a player may claim; add a line per group |
 | `regions.disable-bypass-by-default` | `false` | operators must turn region bypass on |
 | `op-permissions` | `true` | operators have every WorldGuard permission |
+| `use-player-move-event` | `true` | apply the region flags as players walk and ride; `false` leaves only teleports |
+| `use-player-teleports` | `true` | apply the region flags to teleports |
+| `auto-invincible` | `false` | god mode on joining for players with `worldguard.auto-invincible` |
+| `auto-invincible-group` | `false` | god mode on joining for players in the `wg-invincible` group |
+| `auto-no-drowning-group` | `false` | no drowning for players in the `wg-amphibious` group |
+| `regions.invincibility-removes-mobs` | `false` | a mob that hits an invincible player is removed |
+| `regions.titles-always-use-default-times` | `true` | greeting and farewell titles fade over the default times |
 
 Every option is described in WorldGuard's
 [configuration guide](https://worldguard.enginehub.org/en/latest/config/).
@@ -67,6 +146,12 @@ the players the server knows.
 ## Differences from WorldGuard
 
 - Region data is kept in YAML files only; the MySQL storage is not available.
+- `/wg profile` writes a Go CPU profile (`profile.pprof`, read with `go tool pprof`) of the
+  whole server instead of a text report of Java threads; `-i` and `-t` change nothing.
+- `/wg report -p` and `/wg profile -p` do not paste to EngineHub's paste service.
+- Greeting and farewell titles always use the default fade times.
+- When another plugin, such as Essentials, already has `/god`, `/heal` or another general
+  command, WorldGuard's is not registered.
 
 ## For plugin developers
 
