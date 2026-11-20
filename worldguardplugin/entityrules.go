@@ -602,6 +602,12 @@ func (p *protection) ruleHangingBreak(e *plugin.HangingBreakEvent) {
 
 // ruleKnockback keeps a wind charge from pushing what its burst may not
 // touch, and a blow from pushing what it may not damage.
+//
+// The blow branch expects a pusher that deals the hit (a player or mob whose
+// attack already ran its own damage check); the extra DamageEntityEvent only
+// adds denials, never lifts one. A self-push (a thrower's own wind charge)
+// reports the thrower as pusher until golem-mc/golem#226 gives the charge as
+// pusher, so the wind-charge branch is not reached on a real server yet.
 func (p *protection) ruleKnockback(e *plugin.EntityKnockbackEvent) {
 	if e.Pusher == nil {
 		return
