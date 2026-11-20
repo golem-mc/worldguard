@@ -22,7 +22,6 @@ func (p *protection) registerPlayerRules() {
 	s := p.wg.Server
 	plugin.Listen(s, p.onChat, plugin.ListenOptions{Priority: plugin.Normal, IgnoreCancelled: true})
 	plugin.Listen(s, p.onLogin)
-	p.warnHostKeys()
 	plugin.Listen(s, p.onInteractRules, plugin.ListenOptions{Priority: plugin.High})
 	plugin.Listen(s, func(e *plugin.PlayerItemHeldEvent) { p.removeInfiniteStack(e.Player, e.New) }, plugin.ListenOptions{Priority: plugin.High})
 	plugin.Listen(s, p.onCommandRules, plugin.ListenOptions{Priority: plugin.Lowest, IgnoreCancelled: true})
@@ -51,19 +50,39 @@ func (p *protection) onChat(e *plugin.PlayerChatEvent) {
 	}
 }
 
-// onLogin deops joining players when deop-on-join is set. Host keys are
-// not checked: the server does not tell plugins the host name a player
-// connected with (see warnHostKeys). WorldGuard: onPlayerLogin
+// onLogin refuses a player who did not connect with their host key, and
+// deops joining players when deop-on-join is set.
+// WorldGuard: onPlayerLogin
 func (p *protection) onLogin(e *plugin.PlayerLoginEvent) {
-	if e.Result == plugin.LoginAllowed && p.wg.Config.DeopOnJoin {
+	if e.Result != plugin.LoginAllowed {
+		return
+	}
+	if p.wg.Config.DeopOnJoin {
 		e.Player.SetOpLevel(0)
 	}
-}
-
-// warnHostKeys warns once that the configured host keys are not checked.
-func (p *protection) warnHostKeys() {
-	if len(p.wg.Config.HostKeys) > 0 {
-		p.wg.Log.Warn("host-keys are set but not checked: golem does not tell plugins the host name a player connected with")
+	cfg := p.wg.Config
+	if len(cfg.HostKeys) == 0 {
+		return
+	}
+	key, ok := cfg.HostKeys[strings.ToLower(e.Player.UUID().String())]
+	if !ok {
+		key, ok = cfg.HostKeys[strings.ToLower(e.Player.Name())]
+	}
+	if !ok {
+		return
+	}
+	host := e.Hostname
+	if i := strings.IndexByte(host, ':'); i != -1 {
+		host = host[:i]
+	}
+	// Forge clients append "\0FML\0" to the host name.
+	if cfg.HostKeysAllowFMLClients {
+		host = strings.TrimSuffix(host, "\x00FML\x00")
+	}
+	if !strings.EqualFold(host, key) {
+		e.Result = plugin.LoginOther
+		e.Reason = plugin.Plain("You did not join with the valid host key!")
+		p.wg.Log.Warn(fmt.Sprintf("WorldGuard host key check: %s joined with '%s' but '%s' was expected.", e.Player.Name(), host, key))
 	}
 }
 
