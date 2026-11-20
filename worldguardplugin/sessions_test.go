@@ -144,3 +144,34 @@ func join(srv *plugintest.Server, name string) *plugintest.Player {
 	p.Messages(2)
 	return p
 }
+
+// titleRecorder notes the times of the titles sent to a player.
+type titleRecorder struct {
+	plugin.Player
+	times [][3]int
+}
+
+func (r *titleRecorder) SendTitle(title, subtitle plugin.Text, in, stay, out int) {
+	r.times = append(r.times, [3]int{in, stay, out})
+	r.Player.SendTitle(title, subtitle, in, stay, out)
+}
+
+func TestTitleTimes(t *testing.T) {
+	srv, wg := start(t)
+	p := join(srv, "Alice")
+	for _, force := range []bool{true, false} {
+		wg.WorldConfig(p.Handle().World()).ForceDefaultTitleTimes = force
+		want := [3]int{10, 70, 20}
+		if !force {
+			want = [3]int{-1, -1, -1}
+		}
+		r := &titleRecorder{Player: p.Handle()}
+		wg.sendTitleFlag(&localPlayer{Player: r, wg: wg}, `Lobby\nsub`)
+		if len(r.times) != 1 || r.times[0] != want {
+			t.Errorf("force %v: times %v, want %v", force, r.times, want)
+		}
+	}
+	if titles, _ := p.Titles(1); len(titles) != 2 {
+		t.Errorf("titles %q", titles)
+	}
+}

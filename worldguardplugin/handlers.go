@@ -314,9 +314,13 @@ func (wg *WorldGuard) sendTitleFlag(p *localPlayer, msg string) {
 	title, subtitle, _ := strings.Cut(strings.ReplaceAll(msg, `\n`, "\n"), "\n")
 	title = wg.replaceMacros(p, worldguard.ReplaceColorMacros(title))
 	subtitle = wg.replaceMacros(p, worldguard.ReplaceColorMacros(subtitle))
-	// Bukkit leaves the client's title times when the config says not to
-	// force the defaults; golem always sends times, so the defaults go.
-	p.SendTitle(chat.Legacy(title), chat.Legacy(subtitle), 10, 70, 20)
+	// Bukkit leaves the client's title times unless the config forces the
+	// defaults; negative times keep them.
+	fadeIn, stay, fadeOut := -1, -1, -1
+	if cfg := wg.WorldConfig(p.World()); cfg == nil || cfg.ForceDefaultTitleTimes {
+		fadeIn, stay, fadeOut = 10, 70, 20
+	}
+	p.SendTitle(chat.Legacy(title), chat.Legacy(subtitle), fadeIn, stay, fadeOut)
 }
 
 // notifyEntry tells everyone with worldguard.notify that a player entered
