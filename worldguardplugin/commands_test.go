@@ -101,7 +101,7 @@ func TestToggles(t *testing.T) {
 func TestWorldGuardCommands(t *testing.T) {
 	srv, wg := start(t)
 	contains(t, srv.Console("wg version"), "WorldGuard ")
-	contains(t, srv.Console("wg"), "/wg <version|reload|report|profile|stopprofile|flushstates|running>")
+	contains(t, srv.Console("wg"), "/wg <version|reload|report|profile|stopprofile|flushstates|debug|running>")
 	contains(t, srv.Console("worldguard reload"), "WorldGuard configuration reloaded.")
 	contains(t, srv.Console("wg flushstates"), "Cleared all states.")
 	contains(t, srv.Console("wg running"), "There are currently no running tasks.")

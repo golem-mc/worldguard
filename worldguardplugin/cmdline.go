@@ -27,6 +27,8 @@ type wgCommand struct {
 	run  func(wg *WorldGuard, a *cmdArgs) error
 	// complete suggests the argument at index i, nil for player names.
 	complete func(wg *WorldGuard, a *cmdArgs, i int) []string
+	// group, when set, holds nested sub-commands that take the words.
+	group *commandGroup
 }
 
 // cmdArgs is a parsed command line. WorldGuard: CommandContext
@@ -187,6 +189,10 @@ func (c *wgCommand) usageLine(label string) string {
 
 // execute runs the command for sender with the words after label.
 func (c *wgCommand) execute(wg *WorldGuard, sender plugin.CommandSender, label string, words []string) error {
+	if c.group != nil {
+		c.group.execute(wg, sender, label, words)
+		return nil
+	}
 	if c.perm != "" && !wg.HasPermission(sender, c.perm) {
 		return errNoPermission
 	}
@@ -234,6 +240,9 @@ func (c *wgCommand) runner(wg *WorldGuard, label string) func(ctx *plugin.Comman
 
 // suggest completes the last word of a partial argument line.
 func (c *wgCommand) suggest(wg *WorldGuard, sender plugin.CommandSender, partial string) []string {
+	if c.group != nil {
+		return c.group.suggest(wg, sender, partial)
+	}
 	if c.perm != "" && !wg.HasPermission(sender, c.perm) {
 		return nil
 	}

@@ -142,6 +142,11 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
   Dispensers equipping armour are not checked against `on-equip` (golem-mc/golem#170).
 - **Armour** for the blacklist is any item equippable on the head, chest, legs or feet,
   which covers upstream's armour tags, skulls, carved pumpkins and elytra.
+- **`/wg debug`** (`debug.go`, upstream's `BukkitDebugHandler` and `CancelReport`) fires
+  golem's own events through `Events.Fire` with an observer registered last at each
+  priority, so it reports at which priority the cancelled state changed; golem cannot say
+  which plugin changed it (golem-mc/golem#172). `-s` logs the report instead of pasting it.
+  `wgCommand.group` nests a command group under a sub-command for it.
 
 ## Tests
 
