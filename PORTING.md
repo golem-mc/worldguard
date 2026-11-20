@@ -18,6 +18,11 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
 | `worldguardplugin/cmdline.go`, `matcher.go` | The sk89q command style (flags, usage errors) and player and world matching | `CommandsManager`, `BukkitStringMatcher` |
 | `worldguardplugin/general.go`, `toggles.go`, `wgcommands.go` | `/god` and the other general commands, the toggles, `/wg` | `GeneralCommands`, `ToggleCommands`, `WorldGuardCommands` |
 | `internal/chat/` | Legacy `§` text and WorldEdit's message colours | `CommandUtils`, `Actor.print*` |
+| `event/` | WorldGuard's own events (place, break and use blocks; spawn, destroy, use and damage entities; use items; disallowed PvP) and their `Cause` | `bukkit/event/`, `bukkit/cause/Cause` |
+| `worldguardplugin/abstraction.go` | Turns golem's events into WorldGuard's | `EventAbstractionListener` |
+| `worldguardplugin/regionprotection.go`, `buildperms.go` | Judges WorldGuard's events against regions and build permission nodes; the flags blocks and mobs obey | `RegionProtectionListener`, `BuildPermissionListener`, `RegionFlagsListener` |
+| `worldguardplugin/blockrules.go`, `entityrules.go`, `playerrules.go`, `worldrules.go`, `commandfilter.go` | The world settings and the flags read on golem's own events | `WorldGuardBlockListener`, `WorldGuardEntityListener`, `WorldGuardHangingListener`, `WorldGuardPlayerListener` (chat, commands, wand, de-op), `CommandFilter`, `WorldGuardWeatherListener`, `WorldGuardWorldListener`, `WorldRulesListener`, `BlockedPotionsListener` |
+| `worldguardplugin/materials.go`, `materials_table.go`, `entities.go` | Which blocks, items and entities count as what | `bukkit/util/Materials`, `Entities`, `Blocks` |
 | `cmd/server/` | A server with WorldGuard and WorldEdit built in | — |
 
 ## Decisions
@@ -74,6 +79,31 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
 - **Saving**: changes are saved every 30 seconds in the background and on shutdown, as
   upstream does.
 
+- **Protection events** are defined on golem's event bus (`plugin.DefineEvent`), so other
+  plugins can listen to them as to upstream's. Upstream's bulk events share the block list
+  with the server event; here the positions left after listeners filter are copied back
+  into the server event (explosions, tree growth). A block event whose positions all go
+  is denied, as upstream's.
+- **Materials** come from upstream's `Materials` table, converted to `materials_table.go`
+  by name; tags golem does not know (Bukkit's own, or a newer version's) fall back to
+  their members' name patterns. Bukkit's entity interfaces (`Enemy`, `Creature`,
+  `Ambient`) are read from the vanilla mob category.
+- **Causes golem does not give** are stood in for: a fire or lava block near an ignited
+  block for fire spread and lava fire, the hopper side of an item move for its initiator,
+  the mob's own block for the lightning that converts it. Primed TNT and falling blocks
+  have no known origin, so they are an unknown cause. (golem-mc/golem#164)
+- **Damage causes** are read from the vanilla damage type: `lava`, `cactus`,
+  `out_of_world`, `in_wall` and so on; an explosion with no entity is a block explosion.
+- **Host keys** are not checked, since golem does not give plugins the handshake's host
+  name; a warning is logged when they are set.
+- **Not ported:** sign chest protection (`ChestProtectionListener`, deprecated upstream),
+  CommandBook god mode interop (`WorldGuardCommandBookListener`, `WorldGuardServerListener`),
+  the cancel debugging (`DebuggingListener`), and listeners for events golem does not
+  fire: potion splashes and lingering clouds, leashing, lectern books, farmland moisture,
+  knockback (golem-mc/golem#166); redstone sponges and tipped arrows need golem-mc/golem#167.
+- **Debouncing** keeps upstream's windows (10 seconds for mobs on blocks and pickups, 30
+  for hopper moves), with a plain map instead of Guava's cache.
+
 ## Tests
 
 - `calculator_test.go` is upstream's `FlagValueCalculatorTest`, translated line by line.
@@ -81,4 +111,6 @@ a golem plugin. The reference is upstream's source on its master branch; clone i
   `HashMapIndexRemovalTest` and `RegionIntersectTest`, and checks flag parsing and
   `regions.yml` marshalling.
 - `internal/storage` loads a `regions.yml` in upstream's format and saves it back.
-- `worldguardplugin` runs the plugin on a golem test server (`plugintest`).
+- `worldguardplugin` runs the plugin on a golem test server (`plugintest`): breaking,
+  placing, PvP, chat and command flags, the wand, build permission nodes and TNT.
+- `commandfilter_test.go` is upstream's `CommandFilterTest`, translated.
