@@ -3,7 +3,7 @@ module github.com/golem-mc/worldguard
 go 1.27.4
 
 require (
-	github.com/golem-mc/golem v0.0.0-20261120233601-465ac52ea466
+	github.com/golem-mc/golem v0.1.0
 	github.com/golem-mc/vault v0.0.0-20261120163516-3797f133e39b
 	github.com/golem-mc/worldedit v0.0.0-20261120210300-2e0d4c3b105a
 	github.com/google/pprof v0.0.0-20261118010117-084b33a85f63
@@ -13,7 +13,7 @@ require (
 
 require (
 	github.com/dustin/go-humanize v1.1.0 // indirect
-	github.com/klauspost/compress v1.20.4 // indirect
+	github.com/klauspost/compress v1.20.5 // indirect
 	github.com/magiconair/properties v1.18.13 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/ncruces/go-strftime v1.1.0 // indirect
