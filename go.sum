@@ -1,11 +1,11 @@
 github.com/dustin/go-humanize v1.1.0 h1:dbKTrvD0klcbBV/h4AWJdMuZogJACoMlvWIWZ5b2xWg=
 github.com/dustin/go-humanize v1.1.0/go.mod h1:hc1CvRkJMsgxqjmjMQF3QNRAZBwY8AXBAzKYoSX9sFI=
-github.com/golem-mc/golem v0.0.0-20261120210134-4be9dcafc06f h1:f576ay6IyfwYnb3QJq1oXzNp096g0ykCv3dUZZOurh8=
-github.com/golem-mc/golem v0.0.0-20261120210134-4be9dcafc06f/go.mod h1:oFlU6ijSdw7lNo/gxfCuANfYyklqkw5a9qGaUrbLcms=
-github.com/golem-mc/vault v0.0.0-20261120150336-8a79f26b77e7 h1:YqhHkVz18zsuJU57SYqwHzMlY2ps94VfKljfqBmJXmk=
-github.com/golem-mc/vault v0.0.0-20261120150336-8a79f26b77e7/go.mod h1:xJuOXWMFXfqRjH7z5k0XB3IcK2iXWrcBJG+jO6OeVkU=
-github.com/golem-mc/worldedit v0.0.0-20261120145747-5da4cc732af3 h1:2h5bqbWLEIwUxfRkLLzHrnHbC8P1WVbPpT8bR3jA8rA=
-github.com/golem-mc/worldedit v0.0.0-20261120145747-5da4cc732af3/go.mod h1:MsCNedMNJl3l2gFMsxZxxpvlaz98yucauZNRG4KR0KY=
+github.com/golem-mc/golem v0.0.0-20261120233601-465ac52ea466 h1:u1LihFszk7U03o2fRW85bN56xJL9rHDRvtnTIKy9eOY=
+github.com/golem-mc/golem v0.0.0-20261120233601-465ac52ea466/go.mod h1:oFlU6ijSdw7lNo/gxfCuANfYyklqkw5a9qGaUrbLcms=
+github.com/golem-mc/vault v0.0.0-20261120163516-3797f133e39b h1:B+bKRp1VqLeSYgk1f6rh5vulC695kHchHmT4KcuQ++k=
+github.com/golem-mc/vault v0.0.0-20261120163516-3797f133e39b/go.mod h1:dojUguh+WFkhMH27DZbjG46a91UdGuIrTE8GWR7bv6w=
+github.com/golem-mc/worldedit v0.0.0-20261120210300-2e0d4c3b105a h1:HeJoSB5G5h4loXRiH1o7cao0dHDpPNsSM7NgTLslhcs=
+github.com/golem-mc/worldedit v0.0.0-20261120210300-2e0d4c3b105a/go.mod h1:5av3cl5KD1tAWX7e8aEJh7QxTywrzRMZNj7Es3jdUO4=
 github.com/google/pprof v0.0.0-20261118010117-084b33a85f63 h1:dTH7+vX2yD0Xq3wXeU6R1s5uUuJC8o9sDW8g2k4bAg4=
 github.com/google/pprof v0.0.0-20261118010117-084b33a85f63/go.mod h1:yUo1AMMpsPIDFGuwDK8nLcf8+vvAd5l2O6JDZ6hpwrM=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
