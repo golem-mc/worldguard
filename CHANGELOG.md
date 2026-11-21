@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/golem-mc/worldguard/compare/v0.1.0...v0.1.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deps:** update golem-mc modules ([#49](https://github.com/golem-mc/worldguard/issues/49)) ([d759068](https://github.com/golem-mc/worldguard/commit/d759068862ae79ce2ee8ba869970949eed02c523))
+
 ## 0.1.0 (2026-11-21)
 
 
