@@ -20,7 +20,7 @@ runs:
     - uses: jdx/mise-action@v5
       with:
         # renovate: datasource=github-releases depName=jdx/mise
-        version: 2026.11.7
+        version: 2026.11.10
         cache: true
 
     # Modules for a given go.sum never change, so a fixed key is saved once and
