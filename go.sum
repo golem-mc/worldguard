@@ -1,7 +1,7 @@
 github.com/dustin/go-humanize v1.1.0 h1:dbKTrvD0klcbBV/h4AWJdMuZogJACoMlvWIWZ5b2xWg=
 github.com/dustin/go-humanize v1.1.0/go.mod h1:hc1CvRkJMsgxqjmjMQF3QNRAZBwY8AXBAzKYoSX9sFI=
-github.com/golem-mc/golem v0.1.0 h1:qlKieKHNIkmEzDAETHsY9Hn9soXLbQaNwcVMePErx1I=
-github.com/golem-mc/golem v0.1.0/go.mod h1:SL8kIUQTtUVFSaEUDtr3KeHDJfmAZ7DNMxEI3Eslfdk=
+github.com/golem-mc/golem v0.2.0 h1:dZOmb74fEWjIxyRs5Y4C7zQxnKtbsgfXde0gfENvXf0=
+github.com/golem-mc/golem v0.2.0/go.mod h1:zOE9zr1JxV+7zD0LdGHNt4+TaT1Ctx2GMYs54v1I608=
 github.com/golem-mc/vault v0.1.0 h1:46in39L5WfQMrVXFg/Ft/uqsmJjXIyEXZ4in644495w=
 github.com/golem-mc/vault v0.1.0/go.mod h1:rJtZ5F+MPmdpzl6PCSrbDgqsjrl7wfX51j5eHvR8+x8=
 github.com/golem-mc/worldedit v0.1.0 h1:1l/KMsHc5CKLEYAtHeYz9nCA3XlL1EHp9U0Zn0PiUMc=
@@ -20,8 +20,8 @@ github.com/mattn/go-isatty v0.0.24 h1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsRe
 github.com/mattn/go-isatty v0.0.24/go.mod h1:nMCL3Zebbrt45jsMDgnfIwz6ydEQApk5oEI3HqDio6A=
 github.com/ncruces/go-strftime v1.1.0 h1:vtPmPWMkb539RGV9WpWT9EwJGvrOCKvMNI4obWL47Hk=
 github.com/ncruces/go-strftime v1.1.0/go.mod h1:yVaq7iwCN09vHRrKBrrflXT0M9tTMG2KmZ9Fj7xeG/g=
-github.com/pierrec/lz4/v4 v4.1.33 h1:GjG1TJ1V4IzKP8L96muuuDNpTwd7D+l2ccXrjAbe014=
-github.com/pierrec/lz4/v4 v4.1.33/go.mod h1:7SE9MC2STkNtL4PIwGhjmyVwvILaGI9/COYQNBhKM/c=
+github.com/pierrec/lz4/v4 v4.1.34 h1:5cPY8+z/ffHDpF6Pvv5FffjtZOJJQEiG75267Ol3QtU=
+github.com/pierrec/lz4/v4 v4.1.34/go.mod h1:R7aiqKav9M7+k1JW19D7y7rcavDvw9Te/YTdFJyNXBs=
 github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec h1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=
 github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
 go.yaml.in/yaml/v4 v4.0.0 h1:/LG1pNO84Z4l603j/xMn69CcS5OYhMQ/f7l2LoQUGuw=
